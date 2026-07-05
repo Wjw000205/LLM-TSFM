@@ -74,6 +74,7 @@ class ExpLongTermForecasting:
                 with self._autocast(amp_enabled):
                     pred, true, masks, baseline_pred = self._process_batch(batch)
                     loss_dict = self.criterion(pred, true, batch_masks=masks, baseline_pred=baseline_pred)
+                    loss_dict = self._add_intervention_components(loss_dict)
                     loss = loss_dict["loss"]
 
                 if amp_enabled:
@@ -119,6 +120,7 @@ class ExpLongTermForecasting:
             for batch in self.val_loader:
                 pred, true, masks, baseline_pred = self._process_batch(batch)
                 loss_dict = self.criterion(pred, true, batch_masks=masks, baseline_pred=baseline_pred)
+                loss_dict = self._add_intervention_components(loss_dict)
                 _accumulate(component_sums, loss_dict)
                 preds.append(pred.detach().cpu().numpy())
                 trues.append(true.detach().cpu().numpy())
@@ -150,13 +152,14 @@ class ExpLongTermForecasting:
                 self.training_module.load_state_dict(torch.load(checkpoint, map_location=self.device))
 
         self.training_module.eval()
-        preds, trues, masks_all = [], [], []
+        preds, trues, masks_all, intervention_stats = [], [], [], []
         with torch.no_grad():
             for batch in self.test_loader:
                 pred, true, masks, _ = self._process_batch(batch)
                 preds.append(pred.detach().cpu().numpy())
                 trues.append(true.detach().cpu().numpy())
                 masks_all.append(masks.detach().cpu().numpy())
+                intervention_stats.append(self._intervention_stats())
 
         if not preds:
             raise ValueError("Test loader is empty. Check data length and window sizes.")
@@ -199,6 +202,10 @@ class ExpLongTermForecasting:
             "original_scale": filter_event_metrics(metrics_original),
         }
         (result_dir / "event_metrics.json").write_text(json.dumps(event_metrics, indent=2), encoding="utf-8")
+        (result_dir / "intervention_stats.json").write_text(
+            json.dumps(_average_stat_rows(intervention_stats), indent=2),
+            encoding="utf-8",
+        )
         print(f"test metric_space={metric_space} metrics: {metrics}")
         return metrics
 
@@ -209,6 +216,9 @@ class ExpLongTermForecasting:
         seq_x_llm = seq_x_llm.float().to(self.device)
         seq_y_llm = seq_y_llm.float().to(self.device)
         seq_y_masks = seq_y_masks.float().to(self.device)
+        true = seq_y[:, -int(self.args.pred_len) :, : int(self.args.c_out)]
+        masks = seq_y_masks[:, -int(self.args.pred_len) :, :]
+        future_llm = seq_y_llm[:, -int(self.args.pred_len) :, :]
 
         baseline_pred = None
         if self.baseline_model is not None:
@@ -217,18 +227,37 @@ class ExpLongTermForecasting:
             with torch.no_grad():
                 baseline_pred = self.baseline_model(baseline_input)
 
-        if seq_x_llm.shape[-1] > 0:
+        if seq_x_llm.shape[-1] > 0 and not bool_flag(getattr(self.args, "use_intervention_layer", False)):
             seq_x = torch.cat([seq_x, seq_x_llm], dim=-1)
 
-        pred = self.model(seq_x)
-        true = seq_y[:, -int(self.args.pred_len) :, : int(self.args.c_out)]
-        masks = seq_y_masks[:, -int(self.args.pred_len) :, :]
-        future_llm = seq_y_llm[:, -int(self.args.pred_len) :, :]
+        if bool_flag(getattr(self.args, "use_intervention_layer", False)):
+            pred = self.model(seq_x, future_features=future_llm, future_masks=masks)
+        else:
+            pred = self.model(seq_x)
         if self.rule_adapter is not None:
             pred = self.rule_adapter(pred, future_llm, masks)
         if bool_flag(getattr(self.args, "use_hard_intervention", False)):
             pred = apply_hard_intervention(pred, masks, getattr(self.args, "zero_target", [0.0] * int(self.args.c_out)))
         return pred, true, masks, baseline_pred
+
+    def _add_intervention_components(self, loss_dict: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+        reg_loss = self._intervention_reg_loss()
+        if bool_flag(getattr(self.args, "use_intervention_reg", False)):
+            loss_dict["loss"] = loss_dict["loss"] + float(getattr(self.args, "intervention_reg_weight", 0.0)) * reg_loss
+        loss_dict["intervention_reg_loss"] = reg_loss
+        for key, value in self._intervention_stats().items():
+            loss_dict[key] = reg_loss.new_tensor(value)
+        return loss_dict
+
+    def _intervention_reg_loss(self) -> torch.Tensor:
+        if not hasattr(self.model, "get_intervention_reg_loss"):
+            return next(self.training_module.parameters()).new_tensor(0.0)
+        return self.model.get_intervention_reg_loss()
+
+    def _intervention_stats(self) -> dict[str, float]:
+        if not hasattr(self.model, "get_intervention_stats"):
+            return _zero_intervention_stats()
+        return self.model.get_intervention_stats()
 
     def _acquire_device(self):
         use_gpu = bool_flag(getattr(self.args, "use_gpu", True))
@@ -291,6 +320,8 @@ class ExpLongTermForecasting:
         baseline_args.use_standard_time_features = 0
         baseline_args.use_oracle_features = 0
         baseline_args.use_rule_adapter = 0
+        baseline_args.use_intervention_layer = 0
+        baseline_args.use_intervention_reg = 0
         baseline_args.use_hard_intervention = 0
 
         baseline_model = build_model(baseline_args).to(self.device)
@@ -316,6 +347,11 @@ class ExpLongTermForecasting:
             "freq_loss": train_components["freq_loss"],
             "nonevent_loss": train_components["nonevent_loss"],
             "distill_loss": train_components["distill_loss"],
+            "intervention_reg_loss": train_components["intervention_reg_loss"],
+            "mean_event_gate": train_components["mean_event_gate"],
+            "mean_non_event_gate": train_components["mean_non_event_gate"],
+            "mean_event_delta_norm": train_components["mean_event_delta_norm"],
+            "mean_non_event_delta_norm": train_components["mean_non_event_delta_norm"],
             "val_event_mse": val_components.get("event_mse", 0.0),
             "val_zero_mse": val_components.get("zero_mse", 0.0),
             "val_rule_score": val_components.get("rule_score", 0.0),
@@ -337,6 +373,11 @@ def _empty_components():
         "freq_loss": 0.0,
         "nonevent_loss": 0.0,
         "distill_loss": 0.0,
+        "intervention_reg_loss": 0.0,
+        "mean_event_gate": 0.0,
+        "mean_non_event_gate": 0.0,
+        "mean_event_delta_norm": 0.0,
+        "mean_non_event_delta_norm": 0.0,
         "event_mse": 0.0,
         "zero_mse": 0.0,
         "rule_score": 0.0,
@@ -359,6 +400,22 @@ def _average_components(component_sums, steps: int):
     if steps == 0:
         return _empty_components()
     return {key: value / steps for key, value in component_sums.items()}
+
+
+def _zero_intervention_stats() -> dict[str, float]:
+    return {
+        "mean_event_gate": 0.0,
+        "mean_non_event_gate": 0.0,
+        "mean_event_delta_norm": 0.0,
+        "mean_non_event_delta_norm": 0.0,
+    }
+
+
+def _average_stat_rows(rows: list[dict[str, float]]) -> dict[str, float]:
+    if not rows:
+        return _zero_intervention_stats()
+    keys = _zero_intervention_stats().keys()
+    return {key: float(np.mean([row.get(key, 0.0) for row in rows])) for key in keys}
 
 
 def select_early_stop_value(losses: dict[str, float], metric: str) -> float:
@@ -630,6 +687,13 @@ def print_run_config(args):
         "finetune_epochs",
         "finetune_patience",
         "use_rule_adapter",
+        "use_intervention_layer",
+        "intervention_hidden",
+        "intervention_dropout",
+        "intervention_scale",
+        "intervention_init_zero",
+        "use_intervention_reg",
+        "intervention_reg_weight",
         "use_hard_intervention",
         "dlinear_init_avg",
         "inverse",

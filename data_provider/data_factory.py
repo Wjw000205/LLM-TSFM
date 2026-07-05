@@ -47,7 +47,10 @@ def data_provider(args, flag: str):
         args.standard_time_feature_names = dataset.standard_time_feature_names
         args.llm_rule_feature_names = dataset.llm_rule_feature_names
         args.oracle_feature_names = dataset.oracle_feature_names
-        args.enc_in = dataset.raw_feature_dim + dataset.llm_feature_dim
+        if _flag(getattr(args, "use_intervention_layer", False)):
+            args.enc_in = dataset.raw_feature_dim
+        else:
+            args.enc_in = dataset.raw_feature_dim + dataset.llm_feature_dim
         args.c_out = dataset.target_dim
 
     batch_size = int(getattr(args, "batch_size", 32))

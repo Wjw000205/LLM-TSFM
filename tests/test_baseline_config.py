@@ -182,6 +182,7 @@ def test_official_baseline_scripts_exist_and_disable_non_baseline_modules():
         "--use_diff_loss 0",
         "--use_freq_loss 0",
         "--use_rule_adapter 0",
+        "--use_intervention_layer 0",
         "--use_hard_intervention 0",
         "--early_stop_metric base_mse",
         "--dlinear_init_avg 0",

@@ -7,6 +7,7 @@ from argparse import Namespace
 import torch
 import torch.nn as nn
 
+from models.layers.RuleGatedIntervention import RuleGatedIntervention
 from models.layers.RevIN import RevIN
 
 
@@ -58,6 +59,7 @@ class DLinear(nn.Module):
         self.individual = _flag(cfg.get("individual", False))
         self.use_revin = _flag(cfg.get("use_revin", False))
         self.dlinear_init_avg = _flag(cfg.get("dlinear_init_avg", False))
+        self.use_intervention_layer = _flag(cfg.get("use_intervention_layer", False))
         self.revin_dim = int(cfg.get("raw_input_dim", min(self.enc_in, self.c_out)))
         self.revin_dim = max(1, min(self.revin_dim, self.enc_in))
         self.target_indices = list(cfg.get("target_indices", range(min(self.c_out, self.revin_dim))))
@@ -73,11 +75,22 @@ class DLinear(nn.Module):
         self.channel_projection = nn.Identity()
         if self.c_out != self.enc_in:
             self.channel_projection = nn.Linear(self.enc_in, self.c_out)
+        self.intervention_layer = None
+        intervention_feature_dim = int(cfg.get("llm_feature_dim", 0))
+        if self.use_intervention_layer and intervention_feature_dim > 0:
+            self.intervention_layer = RuleGatedIntervention(
+                hidden_dim=self.enc_in,
+                feature_dim=intervention_feature_dim,
+                intervention_hidden=int(cfg.get("intervention_hidden", 32)),
+                dropout=float(cfg.get("intervention_dropout", 0.0)),
+                intervention_scale=float(cfg.get("intervention_scale", 1.0)),
+                init_zero=_flag(cfg.get("intervention_init_zero", True)),
+            )
         self.revin = RevIN(self.revin_dim) if self.use_revin else None
         if self.dlinear_init_avg:
             self._reset_parameters()
 
-    def forward(self, x):
+    def forward(self, x, future_features=None, future_masks=None):
         """Forecast future values from ``x`` shaped ``[B, seq_len, C]``."""
         if x.ndim != 3:
             raise ValueError("DLinear expects input shaped [B, seq_len, C].")
@@ -105,12 +118,30 @@ class DLinear(nn.Module):
             trend_output = self.linear_trend(trend_init)
 
         output = (seasonal_output + trend_output).permute(0, 2, 1)
+        if self.intervention_layer is not None:
+            output = self.intervention_layer(output, future_features=future_features, future_masks=future_masks)
         output = self.channel_projection(output)
 
         if self.revin is not None:
             indices = self.target_indices if len(self.target_indices) == self.c_out else None
             output = self.revin(output, mode="denorm", feature_indices=indices)
         return output
+
+    def get_intervention_reg_loss(self):
+        if self.intervention_layer is None:
+            device = next(self.parameters()).device
+            return torch.tensor(0.0, device=device)
+        return self.intervention_layer.get_intervention_reg_loss()
+
+    def get_intervention_stats(self) -> dict[str, float]:
+        if self.intervention_layer is None:
+            return {
+                "mean_event_gate": 0.0,
+                "mean_non_event_gate": 0.0,
+                "mean_event_delta_norm": 0.0,
+                "mean_non_event_delta_norm": 0.0,
+            }
+        return self.intervention_layer.get_intervention_stats()
 
     def _reset_parameters(self):
         layers = []

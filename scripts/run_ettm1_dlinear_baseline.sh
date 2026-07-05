@@ -34,7 +34,7 @@ python main.py \
   --use_diff_loss 0 \
   --use_freq_loss 0 \
   --use_rule_adapter 0 \
+  --use_intervention_layer 0 \
   --use_hard_intervention 0 \
   --inverse 0 \
   --des ettm1_dlinear_baseline
-
