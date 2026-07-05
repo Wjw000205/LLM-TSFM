@@ -19,6 +19,7 @@ from torch import optim
 from data_provider.data_factory import data_provider
 from losses.loss_factory import build_loss
 from models.model_factory import build_model
+from models.layers.RulePriorFusion import RulePriorFusion
 from models.rule_adapter import RuleAdapter, apply_hard_intervention
 from utils.early_stopping import EarlyStopping
 from utils.metrics import metric
@@ -36,6 +37,16 @@ class ExpLongTermForecasting:
         self.test_data, self.test_loader = data_provider(args, "test")
         self.model = build_model(args).to(self.device)
         self.rule_adapter = self._build_rule_adapter()
+        self.rule_prior_fusion = self._build_rule_prior_fusion()
+        if bool_flag(getattr(args, "use_rule_prior_fusion", False)) and bool_flag(
+            getattr(args, "use_hard_intervention", False)
+        ):
+            warnings.warn(
+                "use_rule_prior_fusion and use_hard_intervention are both enabled; "
+                "hard_intervention will overwrite the soft prior at zero-event timestamps.",
+                UserWarning,
+                stacklevel=2,
+            )
         self.training_module = nn.ModuleDict({"model": self.model})
         if self.rule_adapter is not None:
             self.training_module["rule_adapter"] = self.rule_adapter
@@ -234,6 +245,13 @@ class ExpLongTermForecasting:
             pred = self.model(seq_x, future_features=future_llm, future_masks=masks)
         else:
             pred = self.model(seq_x)
+        if self.rule_prior_fusion is not None:
+            pred = self.rule_prior_fusion(
+                pred_base=pred,
+                future_masks=masks,
+                future_features=future_llm,
+                zero_target=getattr(self.train_data, "zero_target", getattr(self.args, "zero_target", [0.0])),
+            )
         if self.rule_adapter is not None:
             pred = self.rule_adapter(pred, future_llm, masks)
         if bool_flag(getattr(self.args, "use_hard_intervention", False)):
@@ -278,6 +296,15 @@ class ExpLongTermForecasting:
             return None
         hidden_dim = int(getattr(self.args, "rule_adapter_hidden", 32))
         return RuleAdapter(feature_dim=feature_dim, c_out=int(self.args.c_out), hidden_dim=hidden_dim).to(self.device)
+
+    def _build_rule_prior_fusion(self):
+        if not bool_flag(getattr(self.args, "use_rule_prior_fusion", False)):
+            return None
+        return RulePriorFusion(
+            alpha=float(getattr(self.args, "rule_prior_alpha", 0.5)),
+            use_confidence=bool_flag(getattr(self.args, "rule_prior_use_confidence", False)),
+            rule_prior_types=getattr(self.args, "rule_prior_types", "zero_event"),
+        ).to(self.device)
 
     def _load_pretrained_checkpoint(self):
         checkpoint = getattr(self.args, "load_pretrained_checkpoint", None)
@@ -694,6 +721,10 @@ def print_run_config(args):
         "intervention_init_zero",
         "use_intervention_reg",
         "intervention_reg_weight",
+        "use_rule_prior_fusion",
+        "rule_prior_alpha",
+        "rule_prior_use_confidence",
+        "rule_prior_types",
         "use_hard_intervention",
         "dlinear_init_avg",
         "inverse",

@@ -1,0 +1,404 @@
+{
+  "result_dir": "results\\long_term_forecast_DLinear_ETTm1_ftM_sl336_ll48_pl96_ettm1_rule_prior_pure_dlinear_0",
+  "data": "ETTm1",
+  "rule_path": "./llm_rules/example_rules/ETTm1_rules.json",
+  "event_mask_sum": 129024.0,
+  "zero_mask_sum": 129024.0,
+  "zero_timestamps_first20": [
+    {
+      "window_index": 673,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 0,
+      "channel": "HUFL"
+    },
+    {
+      "window_index": 673,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 1,
+      "channel": "HULL"
+    },
+    {
+      "window_index": 673,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 2,
+      "channel": "MUFL"
+    },
+    {
+      "window_index": 673,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 3,
+      "channel": "MULL"
+    },
+    {
+      "window_index": 673,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 4,
+      "channel": "LUFL"
+    },
+    {
+      "window_index": 673,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 5,
+      "channel": "LULL"
+    },
+    {
+      "window_index": 673,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 6,
+      "channel": "OT"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 94,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 0,
+      "channel": "HUFL"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 94,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 1,
+      "channel": "HULL"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 94,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 2,
+      "channel": "MUFL"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 94,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 3,
+      "channel": "MULL"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 94,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 4,
+      "channel": "LUFL"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 94,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 5,
+      "channel": "LULL"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 94,
+      "timestamp": "2017-11-01 00:00:00",
+      "channel_index": 6,
+      "channel": "OT"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:15:00",
+      "channel_index": 0,
+      "channel": "HUFL"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:15:00",
+      "channel_index": 1,
+      "channel": "HULL"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:15:00",
+      "channel_index": 2,
+      "channel": "MUFL"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:15:00",
+      "channel_index": 3,
+      "channel": "MULL"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:15:00",
+      "channel_index": 4,
+      "channel": "LUFL"
+    },
+    {
+      "window_index": 674,
+      "horizon_index": 95,
+      "timestamp": "2017-11-01 00:15:00",
+      "channel_index": 5,
+      "channel": "LULL"
+    }
+  ],
+  "zero_target": {
+    "HUFL": -1.3697731494903564,
+    "HULL": -0.9756428599357605,
+    "MUFL": -0.9258722066879272,
+    "MULL": -0.39301496744155884,
+    "LUFL": -2.6953930854797363,
+    "LULL": -1.2510015964508057,
+    "OT": -1.8668791055679321
+  },
+  "mask_alignment": {
+    "dataset_mask_shape": [
+      11856,
+      3,
+      7
+    ],
+    "recomputed_mask_shape": [
+      11856,
+      3,
+      7
+    ],
+    "max_abs_diff": 0.0,
+    "matches_recomputed_masks": true
+  },
+  "timestamp_alignment_samples": [
+    {
+      "window_index": 672,
+      "pred_start": "2017-10-31 00:00:00",
+      "pred_end": "2017-10-31 23:45:00",
+      "zero_hit_count": 0,
+      "first_zero_hits": []
+    },
+    {
+      "window_index": 673,
+      "pred_start": "2017-10-31 00:15:00",
+      "pred_end": "2017-11-01 00:00:00",
+      "zero_hit_count": 7,
+      "first_zero_hits": [
+        {
+          "horizon_index": 95,
+          "channel_index": 0,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 95,
+          "channel_index": 1,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 95,
+          "channel_index": 2,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 95,
+          "channel_index": 3,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 95,
+          "channel_index": 4,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 95,
+          "channel_index": 5,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 95,
+          "channel_index": 6,
+          "timestamp": "2017-11-01 00:00:00"
+        }
+      ]
+    },
+    {
+      "window_index": 674,
+      "pred_start": "2017-10-31 00:30:00",
+      "pred_end": "2017-11-01 00:15:00",
+      "zero_hit_count": 14,
+      "first_zero_hits": [
+        {
+          "horizon_index": 94,
+          "channel_index": 0,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 94,
+          "channel_index": 1,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 94,
+          "channel_index": 2,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 94,
+          "channel_index": 3,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 94,
+          "channel_index": 4,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 94,
+          "channel_index": 5,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 94,
+          "channel_index": 6,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 95,
+          "channel_index": 0,
+          "timestamp": "2017-11-01 00:15:00"
+        },
+        {
+          "horizon_index": 95,
+          "channel_index": 1,
+          "timestamp": "2017-11-01 00:15:00"
+        },
+        {
+          "horizon_index": 95,
+          "channel_index": 2,
+          "timestamp": "2017-11-01 00:15:00"
+        }
+      ]
+    },
+    {
+      "window_index": 675,
+      "pred_start": "2017-10-31 00:45:00",
+      "pred_end": "2017-11-01 00:30:00",
+      "zero_hit_count": 21,
+      "first_zero_hits": [
+        {
+          "horizon_index": 93,
+          "channel_index": 0,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 93,
+          "channel_index": 1,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 93,
+          "channel_index": 2,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 93,
+          "channel_index": 3,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 93,
+          "channel_index": 4,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 93,
+          "channel_index": 5,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 93,
+          "channel_index": 6,
+          "timestamp": "2017-11-01 00:00:00"
+        },
+        {
+          "horizon_index": 94,
+          "channel_index": 0,
+          "timestamp": "2017-11-01 00:15:00"
+        },
+        {
+          "horizon_index": 94,
+          "channel_index": 1,
+          "timestamp": "2017-11-01 00:15:00"
+        },
+        {
+          "horizon_index": 94,
+          "channel_index": 2,
+          "timestamp": "2017-11-01 00:15:00"
+        }
+      ]
+    }
+  ],
+  "zero_target_offset_scan": [
+    {
+      "offset": "-1_day",
+      "num_unique_timestamps": 192,
+      "mse_to_zero_target": 3.9122681617736816,
+      "mean": 0.41631534695625305
+    },
+    {
+      "offset": "-1_hour",
+      "num_unique_timestamps": 192,
+      "mse_to_zero_target": 3.23583984375,
+      "mean": -0.07738872617483139
+    },
+    {
+      "offset": "-15_min",
+      "num_unique_timestamps": 192,
+      "mse_to_zero_target": 3.2301220893859863,
+      "mean": -0.0797107070684433
+    },
+    {
+      "offset": "0",
+      "num_unique_timestamps": 192,
+      "mse_to_zero_target": 3.2363383769989014,
+      "mean": -0.07838890701532364
+    },
+    {
+      "offset": "+15_min",
+      "num_unique_timestamps": 192,
+      "mse_to_zero_target": 3.231102705001831,
+      "mean": -0.07989523559808731
+    },
+    {
+      "offset": "+1_hour",
+      "num_unique_timestamps": 192,
+      "mse_to_zero_target": 3.224900007247925,
+      "mean": -0.08313988149166107
+    },
+    {
+      "offset": "+1_day",
+      "num_unique_timestamps": 192,
+      "mse_to_zero_target": 3.3706424236297607,
+      "mean": 0.050430912524461746
+    }
+  ],
+  "true_at_zero_mask": {
+    "mean": -0.07838891446590424,
+    "variance": 1.3127930164337158,
+    "mse_to_zero_target": 3.2363381385803223
+  },
+  "baseline_pred_at_zero_mask": {
+    "mean": 0.15626369416713715,
+    "variance": 0.6862278580665588,
+    "mse_to_zero_target": 3.138089179992676
+  },
+  "theoretical_zero_event_mse": 3.2363383769989014,
+  "theoretical_event_mse": 3.2363383769989014,
+  "hard_intervention_theoretical": {
+    "zero_event_mse": 3.2363383769989014,
+    "event_mse": 3.2363383769989014
+  },
+  "interpretation": [
+    "true values at zero_mask positions are farther from zero_target than baseline predictions; hard zero prior is not a valid oracle on this split.",
+    "offset scan does not show a strong fixed timestamp shift; inspect rule condition, anchor, and zero_target validity first."
+  ]
+}
