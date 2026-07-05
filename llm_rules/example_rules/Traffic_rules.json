@@ -1,0 +1,30 @@
+{
+  "dataset_name": "Traffic",
+  "patterns": [
+    {
+      "name": "noon_peak",
+      "type": "peak_event",
+      "condition": {
+        "kind": "hourly",
+        "hour": 12
+      },
+      "affected_variables": "all",
+      "time_range": "single_step",
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 3.0
+        },
+        "peak_shape": {
+          "enabled": true,
+          "weight": 0.5
+        }
+      },
+      "features": {
+        "peak_mask": true,
+        "hour_distance_to_peak": true
+      }
+    }
+  ]
+}
+

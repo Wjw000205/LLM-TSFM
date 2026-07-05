@@ -1,0 +1,31 @@
+{
+  "dataset_name": "ETTm1",
+  "patterns": [
+    {
+      "name": "periodic_zero_day",
+      "type": "zero_event",
+      "condition": {
+        "kind": "calendar_periodic",
+        "month_interval": 2,
+        "day": 1
+      },
+      "affected_variables": "all",
+      "time_range": "whole_day",
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        },
+        "zero_consistency": {
+          "enabled": true,
+          "weight": 1.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true
+      }
+    }
+  ]
+}
+
