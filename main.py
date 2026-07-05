@@ -66,6 +66,14 @@ def get_args():
     add("--train_epochs", type=int, default=config.get("train_epochs", 10))
     add("--patience", type=int, default=config.get("patience", 3))
     add("--early_stop_metric", type=str, default=config.get("early_stop_metric", "base_mse"), choices=["base_mse", "total_loss"])
+    add(
+        "--selection_metric",
+        type=str,
+        default=config.get("selection_metric", "base_mse"),
+        choices=["base_mse", "total_loss", "event_mse", "guarded_event_mse", "pareto"],
+    )
+    add("--overall_mse_tolerance", type=float, default=config.get("overall_mse_tolerance", 0.05))
+    add("--baseline_metric_path", type=str, default=config.get("baseline_metric_path", None))
     add("--itr", type=int, default=config.get("itr", 1))
     add("--des", type=str, default=config.get("des", "exp"))
 
@@ -84,13 +92,22 @@ def get_args():
     add("--use_peak_shape_loss", type=int, default=config.get("use_peak_shape_loss", None))
     add("--use_diff_loss", type=int, default=config.get("use_diff_loss", None))
     add("--use_freq_loss", type=int, default=config.get("use_freq_loss", None))
+    add("--use_nonevent_preservation_loss", type=int, default=config.get("use_nonevent_preservation_loss", None))
+    add("--use_baseline_distillation", type=int, default=config.get("use_baseline_distillation", 0))
     add("--event_weight", type=float, default=config.get("event_weight", None))
     add("--zero_weight", type=float, default=config.get("zero_weight", None))
     add("--peak_weight", type=float, default=config.get("peak_weight", None))
     add("--diff_weight", type=float, default=config.get("diff_weight", None))
     add("--freq_weight", type=float, default=config.get("freq_weight", None))
+    add("--nonevent_weight", type=float, default=config.get("nonevent_weight", None))
+    add("--distill_weight", type=float, default=config.get("distill_weight", None))
     add("--peak_window_size", type=int, default=config.get("peak_window_size", 2))
     add("--llm_rule_path", type=str, default=config.get("llm_rule_path", None))
+    add("--baseline_checkpoint", type=str, default=config.get("baseline_checkpoint", None))
+    add("--load_pretrained_checkpoint", type=str, default=config.get("load_pretrained_checkpoint", None))
+    add("--finetune_learning_rate", type=float, default=config.get("finetune_learning_rate", None))
+    add("--finetune_epochs", type=int, default=config.get("finetune_epochs", None))
+    add("--finetune_patience", type=int, default=config.get("finetune_patience", None))
 
     add("--use_gpu", type=int, default=config.get("use_gpu", 1))
     add("--device", type=str, default=config.get("device", "cuda:0"))
@@ -108,6 +125,13 @@ def normalize_args(args):
         getattr(args, "use_llm_rule_features", 0)
     )
     args.use_llm_rule_features = int(use_llm_rule_features)
+    if getattr(args, "load_pretrained_checkpoint", None):
+        if getattr(args, "finetune_learning_rate", None) is not None:
+            args.learning_rate = args.finetune_learning_rate
+        if getattr(args, "finetune_epochs", None) is not None:
+            args.train_epochs = args.finetune_epochs
+        if getattr(args, "finetune_patience", None) is not None:
+            args.patience = args.finetune_patience
     return args
 
 

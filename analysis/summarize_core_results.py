@@ -107,10 +107,11 @@ def _markdown(rows: list[dict], filter_value: str) -> str:
             "",
             "## Auto-Diagnosis Draft",
             "",
-            "- Compare `pure_dlinear` against feature/loss variants using both overall and event-window metrics.",
+            "- Naive dataset-aware loss can reduce event-window MSE while materially increasing overall MSE; do not treat that as a deployable win.",
+            "- Use guarded selection, non-event preservation, and weight sweeps when optimizing long-tail regions.",
             "- Treat `hard_intervention_oracle` as an oracle-like upper bound, not a deployable method result.",
             "- If event point counts are zero, regenerate or validate rule masks before interpreting event metrics.",
-            "- Overall MSE/MAE should not materially degrade while event-window metrics improve.",
+            "- A deployable long-tail result should stay inside the overall-MSE guardrail while improving event-window metrics.",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -128,4 +129,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

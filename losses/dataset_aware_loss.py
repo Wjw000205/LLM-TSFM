@@ -25,11 +25,15 @@ class DatasetAwareLoss(nn.Module):
         self.use_peak_shape_loss = _flag(self.config, "use_peak_shape_loss", False)
         self.use_diff_loss = _flag(self.config, "use_diff_loss", False)
         self.use_freq_loss = _flag(self.config, "use_freq_loss", False)
+        self.use_nonevent_preservation_loss = _flag(self.config, "use_nonevent_preservation_loss", False)
+        self.use_baseline_distillation = _flag(self.config, "use_baseline_distillation", False)
         self.event_weight = float(self.config.get("event_weight", 1.0))
         self.zero_weight = float(self.config.get("zero_weight", 1.0))
         self.peak_weight = float(self.config.get("peak_weight", 1.0))
         self.diff_weight = float(self.config.get("diff_weight", 1.0))
         self.freq_weight = float(self.config.get("freq_weight", 1.0))
+        self.nonevent_weight = float(self.config.get("nonevent_weight", 1.0))
+        self.distill_weight = float(self.config.get("distill_weight", 1.0))
         self.peak_window_size = max(1, int(self.config.get("peak_window_size", 1)))
         zero_target = self.config.get("zero_target", None)
         if zero_target is None:
@@ -37,7 +41,7 @@ class DatasetAwareLoss(nn.Module):
         else:
             self.register_buffer("zero_target", torch.as_tensor(zero_target, dtype=torch.float32).view(1, 1, -1))
 
-    def forward(self, pred, true, batch_marks=None, batch_masks=None):
+    def forward(self, pred, true, batch_marks=None, batch_masks=None, baseline_pred=None):
         """Return total loss and every component as tensors."""
         base_loss = F.mse_loss(pred, true)
         zero = pred.new_tensor(0.0)
@@ -46,10 +50,16 @@ class DatasetAwareLoss(nn.Module):
         peak_loss = zero
         diff_loss = zero
         freq_loss = zero
+        nonevent_loss = zero
+        distill_loss = zero
 
         masks = self._parse_masks(batch_masks, pred)
         if self.use_event_weighted_loss and masks["event"] is not None:
             event_loss = self._masked_mse(pred, true, masks["event"])
+        if self.use_nonevent_preservation_loss and masks["event"] is not None:
+            nonevent_loss = self._masked_mse(pred, true, self._non_event_mask(masks["event"]))
+        if self.use_baseline_distillation and baseline_pred is not None and masks["event"] is not None:
+            distill_loss = self._masked_mse(pred, baseline_pred.detach(), self._non_event_mask(masks["event"]))
         if self.use_zero_consistency_loss and masks["zero"] is not None:
             zero_loss = self._zero_consistency(pred, masks["zero"])
         if self.use_peak_shape_loss and masks["peak"] is not None:
@@ -67,6 +77,8 @@ class DatasetAwareLoss(nn.Module):
         total = total + self.peak_weight * peak_loss
         total = total + self.diff_weight * diff_loss
         total = total + self.freq_weight * freq_loss
+        total = total + self.nonevent_weight * nonevent_loss
+        total = total + self.distill_weight * distill_loss
 
         return {
             "loss": total,
@@ -76,6 +88,8 @@ class DatasetAwareLoss(nn.Module):
             "peak_loss": peak_loss,
             "diff_loss": diff_loss,
             "freq_loss": freq_loss,
+            "nonevent_loss": nonevent_loss,
+            "distill_loss": distill_loss,
         }
 
     def _parse_masks(self, batch_masks, pred):
@@ -112,6 +126,9 @@ class DatasetAwareLoss(nn.Module):
         if denom.item() <= self.eps:
             return pred.new_tensor(0.0)
         return (((pred - true) ** 2) * mask).sum() / denom
+
+    def _non_event_mask(self, event_mask):
+        return torch.clamp(1.0 - event_mask, min=0.0, max=1.0)
 
     def _zero_consistency(self, pred, mask):
         denom = self._mask_denominator(mask, pred.shape[-1])

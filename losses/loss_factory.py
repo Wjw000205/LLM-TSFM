@@ -25,6 +25,8 @@ def build_loss(args: Namespace) -> DatasetAwareLoss:
                 "use_peak_shape_loss": False,
                 "use_diff_loss": False,
                 "use_freq_loss": False,
+                "use_nonevent_preservation_loss": False,
+                "use_baseline_distillation": False,
             }
         )
     return DatasetAwareLoss(config)

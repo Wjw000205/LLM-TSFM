@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import copy
+import csv
 import json
+import shutil
+import warnings
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
@@ -35,6 +39,8 @@ class ExpLongTermForecasting:
         self.training_module = nn.ModuleDict({"model": self.model})
         if self.rule_adapter is not None:
             self.training_module["rule_adapter"] = self.rule_adapter
+        self._load_pretrained_checkpoint()
+        self.baseline_model = self._build_baseline_model()
         self.criterion = build_loss(args)
         print_run_config(self.args)
 
@@ -48,8 +54,16 @@ class ExpLongTermForecasting:
         save_loss_config(self.criterion, checkpoint_dir)
         optimizer = optim.Adam(self.training_module.parameters(), lr=float(self.args.learning_rate))
         early_stopping = EarlyStopping(patience=int(self.args.patience))
+        baseline_mse = load_baseline_mse(getattr(self.args, "baseline_metric_path", None))
+        selector = GuardedCheckpointSelector(
+            selection_metric=getattr(self.args, "selection_metric", "base_mse"),
+            baseline_mse=baseline_mse,
+            overall_mse_tolerance=float(getattr(self.args, "overall_mse_tolerance", 0.05)),
+        )
+        early_stop_dir = checkpoint_dir / "_early_stop_monitor"
         amp_enabled = bool_flag(getattr(self.args, "use_amp", False)) and self.device.type == "cuda"
         amp_scaler = torch.amp.GradScaler("cuda", enabled=amp_enabled)
+        validation_history: list[dict[str, float | int]] = []
 
         for epoch in range(int(self.args.train_epochs)):
             self.training_module.train()
@@ -58,8 +72,8 @@ class ExpLongTermForecasting:
             for batch in self.train_loader:
                 optimizer.zero_grad(set_to_none=True)
                 with self._autocast(amp_enabled):
-                    pred, true, masks = self._process_batch(batch)
-                    loss_dict = self.criterion(pred, true, batch_masks=masks)
+                    pred, true, masks, baseline_pred = self._process_batch(batch)
+                    loss_dict = self.criterion(pred, true, batch_masks=masks, baseline_pred=baseline_pred)
                     loss = loss_dict["loss"]
 
                 if amp_enabled:
@@ -75,13 +89,21 @@ class ExpLongTermForecasting:
 
             train_components = _average_components(component_sums, steps)
             val_components = self.validate()
+            validation_history.append(_validation_history_row(epoch + 1, val_components))
+            save_validation_history(validation_history, checkpoint_dir)
             learning_rate = optimizer.param_groups[0]["lr"]
             self._print_epoch(epoch + 1, train_components, val_components, learning_rate, self.args.early_stop_metric)
+            selector.update(epoch + 1, val_components, self.training_module, checkpoint_dir)
             stop_value = select_early_stop_value(val_components, self.args.early_stop_metric)
-            early_stopping(stop_value, self.training_module, checkpoint_dir)
+            early_stopping(stop_value, self.training_module, early_stop_dir)
             if early_stopping.early_stop:
                 break
 
+        selected = selector.finalize()
+        for key, value in selected.items():
+            setattr(self.args, key, value)
+        save_run_config(self.args, checkpoint_dir)
+        save_loss_config(self.criterion, checkpoint_dir)
         best_model_path = checkpoint_dir / "checkpoint.pth"
         if best_model_path.exists():
             self.training_module.load_state_dict(torch.load(best_model_path, map_location=self.device))
@@ -91,14 +113,34 @@ class ExpLongTermForecasting:
         """Evaluate validation loss components."""
         self.training_module.eval()
         component_sums = _empty_components()
+        preds, trues, masks_all = [], [], []
         steps = 0
         with torch.no_grad():
             for batch in self.val_loader:
-                pred, true, masks = self._process_batch(batch)
-                loss_dict = self.criterion(pred, true, batch_masks=masks)
+                pred, true, masks, baseline_pred = self._process_batch(batch)
+                loss_dict = self.criterion(pred, true, batch_masks=masks, baseline_pred=baseline_pred)
                 _accumulate(component_sums, loss_dict)
+                preds.append(pred.detach().cpu().numpy())
+                trues.append(true.detach().cpu().numpy())
+                masks_all.append(masks.detach().cpu().numpy())
                 steps += 1
-        return _average_components(component_sums, steps)
+        components = _average_components(component_sums, steps)
+        if preds:
+            val_metrics = metric(
+                np.concatenate(preds, axis=0),
+                np.concatenate(trues, axis=0),
+                masks=np.concatenate(masks_all, axis=0),
+            )
+            components["base_loss"] = float(val_metrics.get("mse", components["base_loss"]))
+            components["event_mse"] = float(val_metrics.get("event_window_mse", 0.0))
+            components["zero_mse"] = float(val_metrics.get("zero_event_mse", 0.0))
+            components["rule_score"] = float(val_metrics.get("rule_consistency_score", 0.0))
+            components["val_base_mse"] = components["base_loss"]
+            components["val_event_mse"] = components["event_mse"]
+            components["val_zero_mse"] = components["zero_mse"]
+            components["val_rule_score"] = components["rule_score"]
+            components["val_total_loss"] = components["loss"]
+        return components
 
     def test(self, setting: str, load_best: bool = True):
         """Run test split and save predictions, labels, and metrics."""
@@ -111,7 +153,7 @@ class ExpLongTermForecasting:
         preds, trues, masks_all = [], [], []
         with torch.no_grad():
             for batch in self.test_loader:
-                pred, true, masks = self._process_batch(batch)
+                pred, true, masks, _ = self._process_batch(batch)
                 preds.append(pred.detach().cpu().numpy())
                 trues.append(true.detach().cpu().numpy())
                 masks_all.append(masks.detach().cpu().numpy())
@@ -141,6 +183,12 @@ class ExpLongTermForecasting:
         result_dir = ensure_dir(Path(self.args.results) / setting)
         save_run_config(self.args, result_dir)
         save_loss_config(self.criterion, result_dir)
+        checkpoint_history = Path(self.args.checkpoints) / setting / "validation_history.csv"
+        checkpoint_history_json = Path(self.args.checkpoints) / setting / "validation_history.json"
+        if checkpoint_history.exists():
+            shutil.copy2(checkpoint_history, result_dir / "validation_history.csv")
+        if checkpoint_history_json.exists():
+            shutil.copy2(checkpoint_history_json, result_dir / "validation_history.json")
         for filename, array in build_prediction_output_payload(preds, trues, preds_original, trues_original).items():
             np.save(result_dir / filename, array)
         np.save(result_dir / "metrics.npy", metrics)
@@ -162,6 +210,13 @@ class ExpLongTermForecasting:
         seq_y_llm = seq_y_llm.float().to(self.device)
         seq_y_masks = seq_y_masks.float().to(self.device)
 
+        baseline_pred = None
+        if self.baseline_model is not None:
+            baseline_enc_in = int(getattr(self.baseline_model, "enc_in", seq_x.shape[-1]))
+            baseline_input = seq_x[:, :, :baseline_enc_in]
+            with torch.no_grad():
+                baseline_pred = self.baseline_model(baseline_input)
+
         if seq_x_llm.shape[-1] > 0:
             seq_x = torch.cat([seq_x, seq_x_llm], dim=-1)
 
@@ -173,7 +228,7 @@ class ExpLongTermForecasting:
             pred = self.rule_adapter(pred, future_llm, masks)
         if bool_flag(getattr(self.args, "use_hard_intervention", False)):
             pred = apply_hard_intervention(pred, masks, getattr(self.args, "zero_target", [0.0] * int(self.args.c_out)))
-        return pred, true, masks
+        return pred, true, masks, baseline_pred
 
     def _acquire_device(self):
         use_gpu = bool_flag(getattr(self.args, "use_gpu", True))
@@ -195,6 +250,57 @@ class ExpLongTermForecasting:
         hidden_dim = int(getattr(self.args, "rule_adapter_hidden", 32))
         return RuleAdapter(feature_dim=feature_dim, c_out=int(self.args.c_out), hidden_dim=hidden_dim).to(self.device)
 
+    def _load_pretrained_checkpoint(self):
+        checkpoint = getattr(self.args, "load_pretrained_checkpoint", None)
+        if not checkpoint:
+            return
+        path = Path(checkpoint)
+        if not path.exists():
+            raise FileNotFoundError(f"Pretrained checkpoint not found: {path}")
+        state = _unwrap_state_dict(torch.load(path, map_location=self.device))
+        if any(str(key).startswith(("model.", "rule_adapter.")) for key in state):
+            self.training_module.load_state_dict(state, strict=False)
+        else:
+            self.model.load_state_dict(state, strict=False)
+        print(f"loaded_pretrained_checkpoint: {path}")
+
+    def _build_baseline_model(self):
+        if not bool_flag(getattr(self.args, "use_baseline_distillation", False)):
+            return None
+        checkpoint = getattr(self.args, "baseline_checkpoint", None)
+        if not checkpoint:
+            warnings.warn(
+                "use_baseline_distillation=1 but baseline_checkpoint is empty; distillation loss will be disabled.",
+                UserWarning,
+                stacklevel=2,
+            )
+            return None
+        path = Path(checkpoint)
+        if not path.exists():
+            raise FileNotFoundError(f"Baseline checkpoint not found: {path}")
+
+        baseline_args = copy.deepcopy(self.args)
+        raw_dim = int(getattr(self.args, "raw_input_dim", getattr(self.args, "raw_feature_dim", self.args.enc_in)))
+        baseline_args.enc_in = raw_dim
+        baseline_args.llm_feature_dim = 0
+        baseline_args.standard_time_feature_dim = 0
+        baseline_args.llm_rule_feature_dim = 0
+        baseline_args.oracle_feature_dim = 0
+        baseline_args.use_llm_features = 0
+        baseline_args.use_llm_rule_features = 0
+        baseline_args.use_standard_time_features = 0
+        baseline_args.use_oracle_features = 0
+        baseline_args.use_rule_adapter = 0
+        baseline_args.use_hard_intervention = 0
+
+        baseline_model = build_model(baseline_args).to(self.device)
+        baseline_model.load_state_dict(_extract_model_state(torch.load(path, map_location=self.device)), strict=False)
+        baseline_model.eval()
+        for param in baseline_model.parameters():
+            param.requires_grad_(False)
+        print(f"loaded_baseline_distillation_checkpoint: {path}")
+        return baseline_model
+
     @staticmethod
     def _print_epoch(epoch, train_components, val_components, learning_rate, early_stop_metric):
         fields = {
@@ -208,6 +314,11 @@ class ExpLongTermForecasting:
             "peak_loss": train_components["peak_loss"],
             "diff_loss": train_components["diff_loss"],
             "freq_loss": train_components["freq_loss"],
+            "nonevent_loss": train_components["nonevent_loss"],
+            "distill_loss": train_components["distill_loss"],
+            "val_event_mse": val_components.get("event_mse", 0.0),
+            "val_zero_mse": val_components.get("zero_mse", 0.0),
+            "val_rule_score": val_components.get("rule_score", 0.0),
             "total_loss": train_components["loss"],
             "early_stop_value": select_early_stop_value(val_components, early_stop_metric),
             "learning_rate": learning_rate,
@@ -224,12 +335,24 @@ def _empty_components():
         "peak_loss": 0.0,
         "diff_loss": 0.0,
         "freq_loss": 0.0,
+        "nonevent_loss": 0.0,
+        "distill_loss": 0.0,
+        "event_mse": 0.0,
+        "zero_mse": 0.0,
+        "rule_score": 0.0,
+        "val_base_mse": 0.0,
+        "val_event_mse": 0.0,
+        "val_zero_mse": 0.0,
+        "val_rule_score": 0.0,
+        "val_total_loss": 0.0,
     }
 
 
 def _accumulate(target, loss_dict):
     for key in target:
-        target[key] += float(loss_dict[key].detach().cpu())
+        value = loss_dict.get(key)
+        if value is not None:
+            target[key] += float(value.detach().cpu())
 
 
 def _average_components(component_sums, steps: int):
@@ -245,6 +368,187 @@ def select_early_stop_value(losses: dict[str, float], metric: str) -> float:
     if metric == "total_loss":
         return float(losses["loss"])
     raise ValueError("early_stop_metric must be 'base_mse' or 'total_loss'.")
+
+
+class GuardedCheckpointSelector:
+    """Select the persisted checkpoint independently of patience-based early stopping."""
+
+    def __init__(self, selection_metric: str = "base_mse", baseline_mse: float | None = None, overall_mse_tolerance: float = 0.05):
+        self.selection_metric = selection_metric
+        self.baseline_mse = baseline_mse
+        self.overall_mse_tolerance = overall_mse_tolerance
+        self.best_score: tuple[float, ...] | None = None
+        self.selected_epoch: int | None = None
+        self.selected_reason: str | None = None
+        self.fallback_score: float | None = None
+        self.fallback_epoch: int | None = None
+        self.checkpoint_dir: Path | None = None
+        self.selected_metrics: dict[str, float] = {}
+        self.fallback_metrics: dict[str, float] = {}
+        if self.selection_metric in {"guarded_event_mse", "pareto"} and self.baseline_mse is None:
+            warnings.warn(
+                f"selection_metric={self.selection_metric} requested without baseline_mse; falling back to base_mse.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+    def update(self, epoch: int, metrics: dict[str, float], model: torch.nn.Module, checkpoint_dir: str | Path):
+        checkpoint_dir = ensure_dir(checkpoint_dir)
+        self.checkpoint_dir = checkpoint_dir
+        base_mse = _metric_value(metrics, "base_loss", "val_base_mse")
+        event_mse = _metric_value(metrics, "event_mse", "val_event_mse")
+        total_loss = _metric_value(metrics, "loss", "val_total_loss")
+
+        if self.fallback_score is None or base_mse < self.fallback_score:
+            self.fallback_score = base_mse
+            self.fallback_epoch = epoch
+            self.fallback_metrics = _selection_metrics(metrics)
+            torch.save(model.state_dict(), checkpoint_dir / "fallback_checkpoint.pth")
+
+        result = self._score(base_mse=base_mse, event_mse=event_mse, total_loss=total_loss)
+        if result is None:
+            return False
+        score, reason = result
+        if self.best_score is None or score < self.best_score:
+            self.best_score = score
+            self.selected_epoch = epoch
+            self.selected_reason = reason
+            self.selected_metrics = _selection_metrics(metrics)
+            torch.save(model.state_dict(), checkpoint_dir / "checkpoint.pth")
+            return True
+        return False
+
+    def finalize(self) -> dict[str, Any]:
+        if self.selected_epoch is not None:
+            return {
+                "selected_epoch": self.selected_epoch,
+                "selected_reason": self.selected_reason,
+                "selected_metrics": self.selected_metrics,
+            }
+
+        if self.checkpoint_dir is not None and self.fallback_epoch is not None:
+            fallback_path = self.checkpoint_dir / "fallback_checkpoint.pth"
+            checkpoint_path = self.checkpoint_dir / "checkpoint.pth"
+            if fallback_path.exists():
+                shutil.copy2(fallback_path, checkpoint_path)
+            warnings.warn(
+                "No validation checkpoint satisfied the guarded_event_mse overall-MSE guardrail; "
+                "falling back to the lowest validation base MSE checkpoint.",
+                UserWarning,
+                stacklevel=2,
+            )
+            return {
+                "selected_epoch": self.fallback_epoch,
+                "selected_reason": "fallback_base_mse_no_guardrail_candidate",
+                "selected_metrics": self.fallback_metrics,
+            }
+
+        return {
+            "selected_epoch": None,
+            "selected_reason": "no_validation_checkpoint",
+            "selected_metrics": {},
+        }
+
+    def _score(self, base_mse: float, event_mse: float, total_loss: float) -> tuple[float, ...] | None:
+        if self.selection_metric == "base_mse":
+            return (base_mse,), "base_mse"
+        if self.selection_metric == "total_loss":
+            return (total_loss,), "total_loss"
+        if self.selection_metric == "event_mse":
+            return (event_mse,), "event_mse"
+        if self.selection_metric in {"guarded_event_mse", "pareto"}:
+            if self.baseline_mse is None:
+                return (base_mse,), "fallback_base_mse_missing_baseline"
+            threshold = self.baseline_mse * (1.0 + self.overall_mse_tolerance)
+            if base_mse <= threshold:
+                return (event_mse, base_mse), self.selection_metric
+            return None
+        raise ValueError(f"Unknown selection_metric: {self.selection_metric}")
+
+
+def load_baseline_mse(path: str | None) -> float | None:
+    """Load the baseline MSE used by guarded checkpoint selection."""
+    if not path:
+        return None
+    metrics_path = Path(path)
+    if not metrics_path.exists():
+        raise FileNotFoundError(f"Baseline metrics file not found: {metrics_path}")
+    payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+    for key in ("mse", "overall_mse", "Overall MSE"):
+        if key in payload:
+            return float(payload[key])
+    raise KeyError(f"Baseline metrics file must contain one of mse/overall_mse/Overall MSE: {metrics_path}")
+
+
+def save_validation_history(rows: list[dict[str, float | int]], output_dir: str | Path):
+    """Persist validation metrics observed during training."""
+    output_dir = ensure_dir(output_dir)
+    json_path = output_dir / "validation_history.json"
+    csv_path = output_dir / "validation_history.csv"
+    json_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
+    fieldnames = [
+        "epoch",
+        "val_base_mse",
+        "val_event_mse",
+        "val_zero_mse",
+        "val_rule_score",
+        "val_total_loss",
+    ]
+    with csv_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def _validation_history_row(epoch: int, metrics: dict[str, float]) -> dict[str, float | int]:
+    return {
+        "epoch": epoch,
+        "val_base_mse": float(metrics.get("val_base_mse", metrics.get("base_loss", 0.0))),
+        "val_event_mse": float(metrics.get("val_event_mse", metrics.get("event_mse", 0.0))),
+        "val_zero_mse": float(metrics.get("val_zero_mse", metrics.get("zero_mse", 0.0))),
+        "val_rule_score": float(metrics.get("val_rule_score", metrics.get("rule_score", 0.0))),
+        "val_total_loss": float(metrics.get("val_total_loss", metrics.get("loss", 0.0))),
+    }
+
+
+def _metric_value(metrics: dict[str, float], *keys: str) -> float:
+    for key in keys:
+        if key in metrics:
+            return float(metrics[key])
+    raise KeyError(f"Missing metric, expected one of: {keys}")
+
+
+def _selection_metrics(metrics: dict[str, float]) -> dict[str, float]:
+    keys = [
+        "base_loss",
+        "loss",
+        "event_mse",
+        "zero_mse",
+        "rule_score",
+        "val_base_mse",
+        "val_event_mse",
+        "val_zero_mse",
+        "val_rule_score",
+        "val_total_loss",
+    ]
+    return {key: float(metrics[key]) for key in keys if key in metrics}
+
+
+def _unwrap_state_dict(state):
+    if isinstance(state, dict):
+        for key in ("state_dict", "model_state_dict"):
+            if key in state and isinstance(state[key], dict):
+                return state[key]
+    return state
+
+
+def _extract_model_state(state):
+    state = _unwrap_state_dict(state)
+    if not isinstance(state, dict):
+        raise TypeError("Checkpoint must be a state dict or contain a state_dict.")
+    if any(str(key).startswith("model.") for key in state):
+        return {str(key)[len("model.") :]: value for key, value in state.items() if str(key).startswith("model.")}
+    return state
 
 
 def save_run_config(args, output_dir: str | Path):
@@ -307,17 +611,31 @@ def print_run_config(args):
         "use_peak_shape_loss",
         "use_diff_loss",
         "use_freq_loss",
+        "use_nonevent_preservation_loss",
+        "use_baseline_distillation",
         "event_weight",
         "zero_weight",
         "peak_weight",
         "diff_weight",
         "freq_weight",
+        "nonevent_weight",
+        "distill_weight",
         "peak_window_size",
+        "selection_metric",
+        "overall_mse_tolerance",
+        "baseline_metric_path",
+        "baseline_checkpoint",
+        "load_pretrained_checkpoint",
+        "finetune_learning_rate",
+        "finetune_epochs",
+        "finetune_patience",
         "use_rule_adapter",
         "use_hard_intervention",
         "dlinear_init_avg",
         "inverse",
         "early_stop_metric",
+        "selected_epoch",
+        "selected_reason",
     ]:
         if key in payload:
             print(f"  {key}: {payload[key]}")

@@ -241,6 +241,8 @@ def test_dataset_aware_loss_uses_masks_and_returns_all_components():
         "peak_loss",
         "diff_loss",
         "freq_loss",
+        "nonevent_loss",
+        "distill_loss",
     }
     assert set(loss_dict) == expected_keys
     assert loss_dict["event_loss"] > 0
