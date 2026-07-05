@@ -154,7 +154,7 @@ bash scripts/run_ettm1_dlinear_ablation.sh
 bash scripts/run_etth1_dlinear_ablation.sh
 ```
 
-The script covers:
+The ETTm1 script covers:
 
 - Pure DLinear, `seq_len=336`
 - Pure DLinear, `seq_len=96`
@@ -166,6 +166,15 @@ The script covers:
 - DLinear + RevIN + LLM rule features + dataset-aware loss
 - DLinear + rule adapter
 - DLinear + hard intervention
+
+The ETTh1 script only covers rule-free ablations until an ETTh1-specific rule JSON is generated:
+
+- Pure DLinear, `seq_len=336`
+- Pure DLinear, `seq_len=96`
+- DLinear + RevIN
+- DLinear + standard time features
+
+Do not use `ETTm1_rules.json` as an ETTh1 full-method substitute.
 
 ## Train-Only LLM Mining
 

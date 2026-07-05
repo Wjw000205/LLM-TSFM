@@ -196,11 +196,8 @@ def test_official_baseline_scripts_exist_and_disable_non_baseline_modules():
             assert flag in text
 
 
-def test_dlinear_ablation_scripts_cover_required_combinations():
-    scripts = [
-        "scripts/run_ettm1_dlinear_ablation.sh",
-        "scripts/run_etth1_dlinear_ablation.sh",
-    ]
+def test_ettm1_dlinear_ablation_script_covers_required_combinations():
+    scripts = ["scripts/run_ettm1_dlinear_ablation.sh"]
     expected = [
         "--des pure_dlinear_336",
         "--des pure_dlinear_96",
@@ -223,3 +220,30 @@ def test_dlinear_ablation_scripts_cover_required_combinations():
         text = open(path, encoding="utf-8").read()
         for token in expected:
             assert token in text
+
+
+def test_etth1_dlinear_ablation_script_does_not_use_ettm1_rules_without_etth1_rules():
+    text = open("scripts/run_etth1_dlinear_ablation.sh", encoding="utf-8").read()
+
+    expected = [
+        "--des pure_dlinear_336",
+        "--des pure_dlinear_96",
+        "--des revin",
+        "--des standard_time_features",
+    ]
+    forbidden = [
+        "ETTm1_rules.json",
+        "--use_llm_rule_features 1",
+        "--use_dataset_aware_loss 1",
+        "--use_rule_adapter 1",
+        "--use_hard_intervention 1",
+        "--des llm_rule_features",
+        "--des dataset_aware_loss",
+        "--des llm_rule_features_loss",
+        "--des revin_llm_rule_features_loss",
+    ]
+
+    for token in expected:
+        assert token in text
+    for token in forbidden:
+        assert token not in text
