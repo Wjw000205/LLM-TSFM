@@ -34,9 +34,15 @@ c_out=7
 
 That run was not comparable to a pure DLinear baseline because it changed sequence length, learning rate, input channels, normalization behavior, and objective.
 
-## Baseline Check
+## ETTh1 Baseline Re-run
 
-A pure ETTh1 DLinear baseline smoke run was executed with:
+A pure ETTh1 DLinear baseline was re-run after the implementation alignment commit. The saved setting path is:
+
+```text
+results/long_term_forecast_DLinear_ETTh1_ftM_sl336_ll48_pl96_etth1_baseline_es100_rerun_0/setting.txt
+```
+
+The run used:
 
 ```text
 seq_len=336
@@ -57,7 +63,18 @@ use_hard_intervention=0
 inverse=0
 ```
 
-Early stopping selected epoch 2 and stopped at epoch 7:
+The data/model dimension audit confirms this was a pure DLinear input:
+
+```text
+raw_feature_dim=7
+standard_time_feature_dim=0
+llm_rule_feature_dim=0
+oracle_feature_dim=0
+enc_in=7
+c_out=7
+```
+
+Early stopping selected epoch 2 and stopped after epoch 7:
 
 ```text
 best val_base_mse_loss=0.693798 at epoch 2
@@ -65,6 +82,14 @@ test metric_space=normalized
 mse=0.4283130
 mae=0.4406984
 rmse=0.6544563
+```
+
+The original-scale diagnostics saved in `metrics_original_scale.json` are:
+
+```text
+mse=9.8476877
+mae=1.7188561
+rmse=3.1381025
 ```
 
 This is much better than the earlier full-method ETTh1 result:
