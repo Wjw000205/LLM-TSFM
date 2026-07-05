@@ -133,26 +133,21 @@ class ExpLongTermForecasting:
         metrics_original = metric(preds_original, trues_original, masks=masks_all)
         if bool_flag(getattr(self.args, "inverse", False)):
             metrics = metrics_original
-            pred_selected = preds_original
-            true_selected = trues_original
             metric_space = "original"
         else:
             metrics = metrics_normalized
-            pred_selected = preds
-            true_selected = trues
             metric_space = "normalized"
         result_dir = ensure_dir(Path(self.args.results) / setting)
         save_run_config(self.args, result_dir)
-        np.save(result_dir / "pred.npy", pred_selected)
-        np.save(result_dir / "true.npy", true_selected)
-        np.save(result_dir / "pred_normalized.npy", preds)
-        np.save(result_dir / "true_normalized.npy", trues)
-        np.save(result_dir / "pred_original.npy", preds_original)
-        np.save(result_dir / "true_original.npy", trues_original)
+        for filename, array in build_prediction_output_payload(preds, trues, preds_original, trues_original).items():
+            np.save(result_dir / filename, array)
         np.save(result_dir / "metrics.npy", metrics)
         (result_dir / "metrics_normalized.json").write_text(json.dumps(metrics_normalized, indent=2), encoding="utf-8")
         (result_dir / "metrics_original_scale.json").write_text(json.dumps(metrics_original, indent=2), encoding="utf-8")
-        event_metrics = {k: v for k, v in metrics.items() if "event" in k or "rule" in k or "peak" in k}
+        event_metrics = {
+            "normalized": filter_event_metrics(metrics_normalized),
+            "original_scale": filter_event_metrics(metrics_original),
+        }
         (result_dir / "event_metrics.json").write_text(json.dumps(event_metrics, indent=2), encoding="utf-8")
         print(f"test metric_space={metric_space} metrics: {metrics}")
         return metrics
@@ -278,7 +273,11 @@ def print_run_config(args):
         "features",
         "target",
         "raw_feature_dim",
+        "raw_input_dim",
         "llm_feature_dim",
+        "standard_time_feature_dim",
+        "llm_rule_feature_dim",
+        "oracle_feature_dim",
         "enc_in",
         "target_dim",
         "c_out",
@@ -286,7 +285,23 @@ def print_run_config(args):
         "use_revin",
         "use_llm_features",
         "use_llm_rule_features",
+        "use_standard_time_features",
+        "use_oracle_features",
         "use_dataset_aware_loss",
+        "use_event_weighted_loss",
+        "use_zero_consistency_loss",
+        "use_peak_shape_loss",
+        "use_diff_loss",
+        "use_freq_loss",
+        "event_weight",
+        "zero_weight",
+        "peak_weight",
+        "diff_weight",
+        "freq_weight",
+        "peak_window_size",
+        "use_rule_adapter",
+        "use_hard_intervention",
+        "dlinear_init_avg",
         "inverse",
         "early_stop_metric",
     ]:
@@ -310,3 +325,20 @@ def serializable_args(args) -> dict[str, Any]:
         else:
             payload[key] = str(value)
     return dict(sorted(payload.items()))
+
+
+def build_prediction_output_payload(pred_normalized, true_normalized, pred_original, true_original):
+    """Return arrays saved by test(), with pred.npy/true.npy fixed to original scale."""
+    return {
+        "pred.npy": pred_original,
+        "true.npy": true_original,
+        "pred_normalized.npy": pred_normalized,
+        "true_normalized.npy": true_normalized,
+        "pred_original.npy": pred_original,
+        "true_original.npy": true_original,
+    }
+
+
+def filter_event_metrics(metrics: dict[str, float]) -> dict[str, float]:
+    """Keep only event-window metric entries."""
+    return {key: value for key, value in metrics.items() if "event" in key or "rule" in key or "peak" in key}

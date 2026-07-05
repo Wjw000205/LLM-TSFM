@@ -25,11 +25,13 @@ COMMON_ARGS=(
   --llm_rule_path ./llm_rules/example_rules/ETTm1_rules.json
 )
 
-python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 0 --use_llm_features 0 --use_llm_rule_features 0 --use_dataset_aware_loss 0 --use_rule_adapter 0 --use_hard_intervention 0 --des pure_dlinear_336
-python main.py "${COMMON_ARGS[@]}" --seq_len 96 --use_revin 0 --use_llm_features 0 --use_llm_rule_features 0 --use_dataset_aware_loss 0 --use_rule_adapter 0 --use_hard_intervention 0 --des pure_dlinear_96
-python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 1 --use_llm_features 0 --use_llm_rule_features 0 --use_dataset_aware_loss 0 --use_rule_adapter 0 --use_hard_intervention 0 --des revin
-python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 0 --use_llm_features 1 --use_llm_rule_features 1 --use_dataset_aware_loss 0 --use_rule_adapter 0 --use_hard_intervention 0 --des llm_features
-python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 0 --use_llm_features 0 --use_llm_rule_features 0 --use_dataset_aware_loss 1 --use_rule_adapter 0 --use_hard_intervention 0 --early_stop_metric total_loss --des llm_loss
-python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 0 --use_llm_features 1 --use_llm_rule_features 1 --use_dataset_aware_loss 1 --use_rule_adapter 0 --use_hard_intervention 0 --early_stop_metric total_loss --des llm_features_loss
-python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 1 --use_llm_features 1 --use_llm_rule_features 1 --use_dataset_aware_loss 1 --use_rule_adapter 0 --use_hard_intervention 0 --early_stop_metric total_loss --des full_method
-
+python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 0 --use_llm_features 0 --use_standard_time_features 0 --use_llm_rule_features 0 --use_oracle_features 0 --use_dataset_aware_loss 0 --use_rule_adapter 0 --use_hard_intervention 0 --des pure_dlinear_336
+python main.py "${COMMON_ARGS[@]}" --seq_len 96 --use_revin 0 --use_llm_features 0 --use_standard_time_features 0 --use_llm_rule_features 0 --use_oracle_features 0 --use_dataset_aware_loss 0 --use_rule_adapter 0 --use_hard_intervention 0 --des pure_dlinear_96
+python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 1 --use_llm_features 0 --use_standard_time_features 0 --use_llm_rule_features 0 --use_oracle_features 0 --use_dataset_aware_loss 0 --use_rule_adapter 0 --use_hard_intervention 0 --des revin
+python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 0 --use_llm_features 0 --use_standard_time_features 1 --use_llm_rule_features 0 --use_oracle_features 0 --use_dataset_aware_loss 0 --use_rule_adapter 0 --use_hard_intervention 0 --des standard_time_features
+python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 0 --use_llm_features 0 --use_standard_time_features 0 --use_llm_rule_features 1 --use_oracle_features 0 --use_dataset_aware_loss 0 --use_rule_adapter 0 --use_hard_intervention 0 --des llm_rule_features
+python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 0 --use_llm_features 0 --use_standard_time_features 0 --use_llm_rule_features 0 --use_oracle_features 0 --use_dataset_aware_loss 1 --use_rule_adapter 0 --use_hard_intervention 0 --early_stop_metric total_loss --des dataset_aware_loss
+python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 0 --use_llm_features 0 --use_standard_time_features 0 --use_llm_rule_features 1 --use_oracle_features 0 --use_dataset_aware_loss 1 --use_rule_adapter 0 --use_hard_intervention 0 --early_stop_metric total_loss --des llm_rule_features_loss
+python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 1 --use_llm_features 0 --use_standard_time_features 0 --use_llm_rule_features 1 --use_oracle_features 0 --use_dataset_aware_loss 1 --use_rule_adapter 0 --use_hard_intervention 0 --early_stop_metric total_loss --des revin_llm_rule_features_loss
+python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 0 --use_llm_features 0 --use_standard_time_features 0 --use_llm_rule_features 1 --use_oracle_features 0 --use_dataset_aware_loss 0 --use_rule_adapter 1 --use_hard_intervention 0 --des rule_adapter
+python main.py "${COMMON_ARGS[@]}" --seq_len 336 --use_revin 0 --use_llm_features 0 --use_standard_time_features 0 --use_llm_rule_features 0 --use_oracle_features 0 --use_dataset_aware_loss 0 --use_rule_adapter 0 --use_hard_intervention 1 --des hard_intervention

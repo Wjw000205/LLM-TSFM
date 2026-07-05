@@ -74,9 +74,16 @@ class TimeSeriesDataset(Dataset):
         self.target_columns: list[str] = []
         self.input_columns: list[str] = []
         self.feature_dim = 0
+        self.raw_feature_dim = 0
         self.target_dim = 0
         self.llm_feature_dim = 0
+        self.standard_time_feature_dim = 0
+        self.llm_rule_feature_dim = 0
+        self.oracle_feature_dim = 0
         self.zero_target = np.zeros((0,), dtype=np.float32)
+        self.standard_time_feature_names: list[str] = []
+        self.llm_rule_feature_names: list[str] = []
+        self.oracle_feature_names: list[str] = []
 
         self.__read_data__()
 
@@ -97,6 +104,7 @@ class TimeSeriesDataset(Dataset):
         self.target_indices = target_indices
         self.target_columns = target_columns
         self.feature_dim = len(input_cols)
+        self.raw_feature_dim = self.feature_dim
         self.target_dim = len(target_indices)
 
         train_start, train_end = self._split_borders(len(df_raw), "train")
@@ -216,18 +224,19 @@ class TimeSeriesDataset(Dataset):
         names: list[str] = []
         if self.use_standard_time_features:
             values, value_names = generate_standard_time_features(dates)
-            arrays.append(values)
-            names.extend([f"standard_time::{name}" for name in value_names])
+            self.standard_time_feature_dim, self.standard_time_feature_names = self._append_aux_group(
+                arrays, names, values, value_names, "standard_time"
+            )
         if self.use_llm_rule_features and rules is not None:
             values, value_names = generate_llm_rule_features(dates, rules, target_columns=self.target_columns)
-            if values.shape[1] > 0:
-                arrays.append(values)
-                names.extend([f"llm_rule::{name}" for name in value_names])
+            self.llm_rule_feature_dim, self.llm_rule_feature_names = self._append_aux_group(
+                arrays, names, values, value_names, "llm_rule"
+            )
         if self.use_oracle_features and rules is not None:
             values, value_names = generate_oracle_features(dates, rules, target_columns=self.target_columns)
-            if values.shape[1] > 0:
-                arrays.append(values)
-                names.extend([f"oracle::{name}" for name in value_names])
+            self.oracle_feature_dim, self.oracle_feature_names = self._append_aux_group(
+                arrays, names, values, value_names, "oracle"
+            )
         if not arrays:
             return np.zeros((len(dates), 0), dtype=np.float32), []
         return np.concatenate(arrays, axis=1).astype(np.float32), names
@@ -237,6 +246,21 @@ class TimeSeriesDataset(Dataset):
             return np.zeros(self.target_dim, dtype=np.float32)
         zeros = np.zeros((1, self.feature_dim), dtype=np.float32)
         return self.scaler.transform(zeros)[0, self.target_indices].astype(np.float32)
+
+    @staticmethod
+    def _append_aux_group(
+        arrays: list[np.ndarray],
+        names: list[str],
+        values: np.ndarray,
+        value_names: list[str],
+        prefix: str,
+    ) -> tuple[int, list[str]]:
+        if values.shape[1] <= 0:
+            return 0, []
+        prefixed_names = [f"{prefix}::{name}" for name in value_names]
+        arrays.append(values)
+        names.extend(prefixed_names)
+        return values.shape[1], prefixed_names
 
 
 def _flag(value) -> bool:

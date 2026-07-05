@@ -156,17 +156,16 @@ bash scripts/run_etth1_dlinear_ablation.sh
 
 The script covers:
 
-- Base + MSE
-- Base + standard time features
-- Base + LLM rule features
-- Base + LLM rule loss
-- Base + LLM rule features + LLM rule loss
-- Base + rule adapter
-- Base + hard intervention
-- Base + oracle rules
-- z-score only
-- RevIN only
-- z-score + RevIN
+- Pure DLinear, `seq_len=336`
+- Pure DLinear, `seq_len=96`
+- DLinear + RevIN
+- DLinear + standard time features
+- DLinear + LLM rule features
+- DLinear + dataset-aware loss
+- DLinear + LLM rule features + dataset-aware loss
+- DLinear + RevIN + LLM rule features + dataset-aware loss
+- DLinear + rule adapter
+- DLinear + hard intervention
 
 ## Train-Only LLM Mining
 
@@ -187,7 +186,7 @@ Test outputs are saved under `results/<setting>/`:
 - `pred_normalized.npy` and `true_normalized.npy`: normalized-space predictions and labels.
 - `metrics_original_scale.json`: main paper/table metrics.
 - `metrics_normalized.json`: debugging metrics.
-- `event_metrics.json`: event-window subset of original-scale metrics.
+- `event_metrics.json`: event-window metrics in both normalized and original-scale spaces.
 - `setting.txt`: run arguments.
 
 Paper tables should use original-scale metrics unless explicitly stated otherwise. Event-window metrics are central for evaluating long-tail behavior.

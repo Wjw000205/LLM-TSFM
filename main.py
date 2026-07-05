@@ -99,7 +99,16 @@ def get_args():
     add("--seed", type=int, default=config.get("seed", 2024))
     add("--checkpoints", type=str, default=config.get("checkpoints", "./checkpoints/"))
     add("--results", type=str, default=config.get("results", "./results/"))
-    return parser.parse_args()
+    return normalize_args(parser.parse_args())
+
+
+def normalize_args(args):
+    """Normalize compatibility aliases after CLI/config parsing."""
+    use_llm_rule_features = bool_flag(getattr(args, "use_llm_features", 0)) or bool_flag(
+        getattr(args, "use_llm_rule_features", 0)
+    )
+    args.use_llm_rule_features = int(use_llm_rule_features)
+    return args
 
 
 def _load_config(path: str | None) -> dict:

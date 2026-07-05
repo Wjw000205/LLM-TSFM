@@ -31,8 +31,12 @@ def data_provider(args, flag: str):
 
     if flag == "train":
         args.scaler = dataset.scaler
-        args.raw_input_dim = dataset.feature_dim
+        args.raw_feature_dim = dataset.raw_feature_dim
+        args.raw_input_dim = dataset.raw_feature_dim
         args.llm_feature_dim = dataset.llm_feature_dim
+        args.standard_time_feature_dim = dataset.standard_time_feature_dim
+        args.llm_rule_feature_dim = dataset.llm_rule_feature_dim
+        args.oracle_feature_dim = dataset.oracle_feature_dim
         args.target_dim = dataset.target_dim
         args.target_indices = dataset.target_indices
         args.target_columns = dataset.target_columns
@@ -40,7 +44,10 @@ def data_provider(args, flag: str):
         args.zero_target = dataset.zero_target.tolist()
         args.mask_names = dataset.mask_names
         args.llm_feature_names = dataset.llm_feature_names
-        args.enc_in = dataset.feature_dim + dataset.llm_feature_dim
+        args.standard_time_feature_names = dataset.standard_time_feature_names
+        args.llm_rule_feature_names = dataset.llm_rule_feature_names
+        args.oracle_feature_names = dataset.oracle_feature_names
+        args.enc_in = dataset.raw_feature_dim + dataset.llm_feature_dim
         args.c_out = dataset.target_dim
 
     batch_size = int(getattr(args, "batch_size", 32))

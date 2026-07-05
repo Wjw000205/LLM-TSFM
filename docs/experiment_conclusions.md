@@ -97,6 +97,13 @@ The metric gap is primarily a configuration and comparison issue, not evidence t
 - `--early_stop_metric base_mse|total_loss` to separate baseline early stopping from full-method early stopping.
 - Complete run configuration saving to both `results/<setting>/config.json` and `checkpoints/<setting>/config.json`.
 - Clear normalized/original metric outputs.
+- Split feature dimension bookkeeping in the actual data pipeline:
+  - `raw_feature_dim`
+  - `standard_time_feature_dim`
+  - `llm_rule_feature_dim`
+  - `oracle_feature_dim`
+- `pred.npy` and `true.npy` are now fixed original-scale aliases; normalized arrays are saved separately.
+- DLinear ablation scripts now cover the 10 required combinations: pure baselines, RevIN, standard time features, LLM rule features, dataset-aware loss, combined feature/loss runs, rule adapter, and hard intervention.
 
 ## Recommended Next Runs
 
