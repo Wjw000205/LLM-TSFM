@@ -45,6 +45,7 @@ class ExpLongTermForecasting:
 
         checkpoint_dir = Path(self.args.checkpoints) / setting
         save_run_config(self.args, checkpoint_dir)
+        save_loss_config(self.criterion, checkpoint_dir)
         optimizer = optim.Adam(self.training_module.parameters(), lr=float(self.args.learning_rate))
         early_stopping = EarlyStopping(patience=int(self.args.patience))
         amp_enabled = bool_flag(getattr(self.args, "use_amp", False)) and self.device.type == "cuda"
@@ -139,6 +140,7 @@ class ExpLongTermForecasting:
             metric_space = "normalized"
         result_dir = ensure_dir(Path(self.args.results) / setting)
         save_run_config(self.args, result_dir)
+        save_loss_config(self.criterion, result_dir)
         for filename, array in build_prediction_output_payload(preds, trues, preds_original, trues_original).items():
             np.save(result_dir / filename, array)
         np.save(result_dir / "metrics.npy", metrics)
@@ -254,6 +256,18 @@ def save_run_config(args, output_dir: str | Path):
     (output_dir / "setting.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def save_loss_config(criterion, output_dir: str | Path):
+    """Save the resolved dataset-aware loss configuration for auditability."""
+    config = getattr(criterion, "config", None)
+    if not config:
+        return None
+    output_dir = ensure_dir(output_dir)
+    payload = {key: _jsonable_value(value) for key, value in sorted(config.items())}
+    path = output_dir / "loss_config.json"
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return path
+
+
 def print_run_config(args):
     """Print the dimensions and run arguments that affect reproducibility."""
     payload = serializable_args(args)
@@ -325,6 +339,16 @@ def serializable_args(args) -> dict[str, Any]:
         else:
             payload[key] = str(value)
     return dict(sorted(payload.items()))
+
+
+def _jsonable_value(value):
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    if isinstance(value, (list, tuple)):
+        return [_jsonable_value(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): _jsonable_value(item) for key, item in value.items()}
+    return str(value)
 
 
 def build_prediction_output_payload(pred_normalized, true_normalized, pred_original, true_original):

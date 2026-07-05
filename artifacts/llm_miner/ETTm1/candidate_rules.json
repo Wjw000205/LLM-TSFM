@@ -1,0 +1,2778 @@
+{
+  "dataset_name": "ETTm1",
+  "analysis_scope": "train_only",
+  "data_path": "ETTm1.csv",
+  "seq_len": 336,
+  "pred_len": 96,
+  "near_zero_eps": 1e-05,
+  "zero_event_candidates": [
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-12-05 06:30:00",
+      "end_time": "2016-12-08 07:30:00",
+      "duration": 293,
+      "affected_variables": [
+        "MUFL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-12-05 06:30:00",
+          "2016-12-08 07:30:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-12-05 07:15:00",
+      "end_time": "2016-12-08 07:30:00",
+      "duration": 290,
+      "affected_variables": [
+        "MULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-12-05 07:15:00",
+          "2016-12-08 07:30:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-12-05 08:15:00",
+      "end_time": "2016-12-07 19:15:00",
+      "duration": 237,
+      "affected_variables": [
+        "LUFL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-12-05 08:15:00",
+          "2016-12-07 19:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-12-05 08:15:00",
+      "end_time": "2016-12-07 19:15:00",
+      "duration": 237,
+      "affected_variables": [
+        "LULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-12-05 08:15:00",
+          "2016-12-07 19:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-12-05 08:15:00",
+      "end_time": "2016-12-07 18:45:00",
+      "duration": 235,
+      "affected_variables": [
+        "HUFL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-12-05 08:15:00",
+          "2016-12-07 18:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-12-05 08:30:00",
+      "end_time": "2016-12-07 18:45:00",
+      "duration": 234,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-12-05 08:30:00",
+          "2016-12-07 18:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-03-30 23:45:00",
+      "end_time": "2017-03-31 23:45:00",
+      "duration": 97,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-03-30 23:45:00",
+          "2017-03-31 23:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-12-06 11:15:00",
+      "end_time": "2016-12-06 16:15:00",
+      "duration": 21,
+      "affected_variables": [
+        "OT"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-12-06 11:15:00",
+          "2016-12-06 16:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-08-03 10:30:00",
+      "end_time": "2016-08-03 15:15:00",
+      "duration": 20,
+      "affected_variables": [
+        "MUFL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-08-03 10:30:00",
+          "2016-08-03 15:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-08-03 10:15:00",
+      "end_time": "2016-08-03 14:45:00",
+      "duration": 19,
+      "affected_variables": [
+        "MULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-08-03 10:15:00",
+          "2016-08-03 14:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-05-23 23:45:00",
+      "end_time": "2017-05-24 03:15:00",
+      "duration": 15,
+      "affected_variables": [
+        "MULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-05-23 23:45:00",
+          "2017-05-24 03:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-01-30 19:15:00",
+      "end_time": "2017-01-30 21:00:00",
+      "duration": 8,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-01-30 19:15:00",
+          "2017-01-30 21:00:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-05-04 19:30:00",
+      "end_time": "2017-05-04 21:15:00",
+      "duration": 8,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-05-04 19:30:00",
+          "2017-05-04 21:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-07-25 08:45:00",
+      "end_time": "2016-07-25 10:30:00",
+      "duration": 8,
+      "affected_variables": [
+        "MULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-07-25 08:45:00",
+          "2016-07-25 10:30:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-01-21 19:15:00",
+      "end_time": "2017-01-21 20:45:00",
+      "duration": 7,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-01-21 19:15:00",
+          "2017-01-21 20:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-05-24 03:45:00",
+      "end_time": "2017-05-24 05:15:00",
+      "duration": 7,
+      "affected_variables": [
+        "MULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-05-24 03:45:00",
+          "2017-05-24 05:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-06-23 19:15:00",
+      "end_time": "2017-06-23 20:45:00",
+      "duration": 7,
+      "affected_variables": [
+        "MULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-06-23 19:15:00",
+          "2017-06-23 20:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-12-06 00:15:00",
+      "end_time": "2016-12-06 01:45:00",
+      "duration": 7,
+      "affected_variables": [
+        "OT"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-12-06 00:15:00",
+          "2016-12-06 01:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-06-13 19:30:00",
+      "end_time": "2017-06-13 20:45:00",
+      "duration": 6,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-06-13 19:30:00",
+          "2017-06-13 20:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-12-17 14:45:00",
+      "end_time": "2016-12-17 15:45:00",
+      "duration": 5,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-12-17 14:45:00",
+          "2016-12-17 15:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-01-02 02:30:00",
+      "end_time": "2017-01-02 03:30:00",
+      "duration": 5,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-01-02 02:30:00",
+          "2017-01-02 03:30:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-01-14 16:00:00",
+      "end_time": "2017-01-14 17:00:00",
+      "duration": 5,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-01-14 16:00:00",
+          "2017-01-14 17:00:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-01-19 21:15:00",
+      "end_time": "2017-01-19 22:15:00",
+      "duration": 5,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-01-19 21:15:00",
+          "2017-01-19 22:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-05-01 12:15:00",
+      "end_time": "2017-05-01 13:15:00",
+      "duration": 5,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-05-01 12:15:00",
+          "2017-05-01 13:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-06-10 18:00:00",
+      "end_time": "2017-06-10 19:00:00",
+      "duration": 5,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-06-10 18:00:00",
+          "2017-06-10 19:00:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-02-08 07:45:00",
+      "end_time": "2017-02-08 08:45:00",
+      "duration": 5,
+      "affected_variables": [
+        "OT"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-02-08 07:45:00",
+          "2017-02-08 08:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-07-25 18:00:00",
+      "end_time": "2016-07-25 18:45:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-07-25 18:00:00",
+          "2016-07-25 18:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-12-22 16:00:00",
+      "end_time": "2016-12-22 16:45:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-12-22 16:00:00",
+          "2016-12-22 16:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-12-27 18:00:00",
+      "end_time": "2016-12-27 18:45:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-12-27 18:00:00",
+          "2016-12-27 18:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-12-30 16:15:00",
+      "end_time": "2016-12-30 17:00:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-12-30 16:15:00",
+          "2016-12-30 17:00:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-01-02 13:30:00",
+      "end_time": "2017-01-02 14:15:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-01-02 13:30:00",
+          "2017-01-02 14:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-01-19 12:30:00",
+      "end_time": "2017-01-19 13:15:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-01-19 12:30:00",
+          "2017-01-19 13:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-01-22 08:45:00",
+      "end_time": "2017-01-22 09:30:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-01-22 08:45:00",
+          "2017-01-22 09:30:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-01-22 20:15:00",
+      "end_time": "2017-01-22 21:00:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-01-22 20:15:00",
+          "2017-01-22 21:00:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-01-23 07:30:00",
+      "end_time": "2017-01-23 08:15:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-01-23 07:30:00",
+          "2017-01-23 08:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-02-08 19:15:00",
+      "end_time": "2017-02-08 20:00:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-02-08 19:15:00",
+          "2017-02-08 20:00:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-02-20 16:00:00",
+      "end_time": "2017-02-20 16:45:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-02-20 16:00:00",
+          "2017-02-20 16:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-03-19 10:15:00",
+      "end_time": "2017-03-19 11:00:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-03-19 10:15:00",
+          "2017-03-19 11:00:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-04-04 09:30:00",
+      "end_time": "2017-04-04 10:15:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-04-04 09:30:00",
+          "2017-04-04 10:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-04-27 22:15:00",
+      "end_time": "2017-04-27 23:00:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-04-27 22:15:00",
+          "2017-04-27 23:00:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-06-10 19:30:00",
+      "end_time": "2017-06-10 20:15:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-06-10 19:30:00",
+          "2017-06-10 20:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-06-17 19:45:00",
+      "end_time": "2017-06-17 20:30:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-06-17 19:45:00",
+          "2017-06-17 20:30:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-06-19 18:15:00",
+      "end_time": "2017-06-19 19:00:00",
+      "duration": 4,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-06-19 18:15:00",
+          "2017-06-19 19:00:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-05-18 20:00:00",
+      "end_time": "2017-05-18 20:45:00",
+      "duration": 4,
+      "affected_variables": [
+        "MULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-05-18 20:00:00",
+          "2017-05-18 20:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-05-25 19:30:00",
+      "end_time": "2017-05-25 20:15:00",
+      "duration": 4,
+      "affected_variables": [
+        "MULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-05-25 19:30:00",
+          "2017-05-25 20:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-06-11 17:45:00",
+      "end_time": "2017-06-11 18:30:00",
+      "duration": 4,
+      "affected_variables": [
+        "MULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-06-11 17:45:00",
+          "2017-06-11 18:30:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2017-06-17 19:30:00",
+      "end_time": "2017-06-17 20:15:00",
+      "duration": 4,
+      "affected_variables": [
+        "MULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2017-06-17 19:30:00",
+          "2017-06-17 20:15:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-10-18 20:00:00",
+      "end_time": "2016-10-18 20:30:00",
+      "duration": 3,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-10-18 20:00:00",
+          "2016-10-18 20:30:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-10-19 19:30:00",
+      "end_time": "2016-10-19 20:00:00",
+      "duration": 3,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-10-19 19:30:00",
+          "2016-10-19 20:00:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "zero_event_candidate",
+      "start_time": "2016-11-07 18:45:00",
+      "end_time": "2016-11-07 19:15:00",
+      "duration": 3,
+      "affected_variables": [
+        "HULL"
+      ],
+      "zero_ratio": 1.0,
+      "mean_abs_value": 0.0,
+      "support_evidence": [
+        [
+          "2016-11-07 18:45:00",
+          "2016-11-07 19:15:00"
+        ]
+      ]
+    }
+  ],
+  "periodic_calendar_candidates": [
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 16
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.08402777777777778,
+      "evidence_windows": [
+        [
+          "2016-07-01 16:00:00",
+          "2016-07-01 16:45:00"
+        ],
+        [
+          "2016-07-02 16:00:00",
+          "2016-07-02 16:45:00"
+        ],
+        [
+          "2016-07-03 16:00:00",
+          "2016-07-03 16:45:00"
+        ],
+        [
+          "2016-07-04 16:00:00",
+          "2016-07-04 16:45:00"
+        ],
+        [
+          "2016-07-05 16:00:00",
+          "2016-07-05 16:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 22
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.06805555555555555,
+      "evidence_windows": [
+        [
+          "2016-07-01 22:00:00",
+          "2016-07-01 22:45:00"
+        ],
+        [
+          "2016-07-02 22:00:00",
+          "2016-07-02 22:45:00"
+        ],
+        [
+          "2016-07-03 22:00:00",
+          "2016-07-03 22:45:00"
+        ],
+        [
+          "2016-07-04 22:00:00",
+          "2016-07-04 22:45:00"
+        ],
+        [
+          "2016-07-05 22:00:00",
+          "2016-07-05 22:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 15
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.06527777777777778,
+      "evidence_windows": [
+        [
+          "2016-07-01 15:00:00",
+          "2016-07-01 15:45:00"
+        ],
+        [
+          "2016-07-02 15:00:00",
+          "2016-07-02 15:45:00"
+        ],
+        [
+          "2016-07-03 15:00:00",
+          "2016-07-03 15:45:00"
+        ],
+        [
+          "2016-07-04 15:00:00",
+          "2016-07-04 15:45:00"
+        ],
+        [
+          "2016-07-05 15:00:00",
+          "2016-07-05 15:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 8
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.0625,
+      "evidence_windows": [
+        [
+          "2016-07-01 08:00:00",
+          "2016-07-01 08:45:00"
+        ],
+        [
+          "2016-07-02 08:00:00",
+          "2016-07-02 08:45:00"
+        ],
+        [
+          "2016-07-03 08:00:00",
+          "2016-07-03 08:45:00"
+        ],
+        [
+          "2016-07-04 08:00:00",
+          "2016-07-04 08:45:00"
+        ],
+        [
+          "2016-07-05 08:00:00",
+          "2016-07-05 08:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 9
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.0625,
+      "evidence_windows": [
+        [
+          "2016-07-01 09:00:00",
+          "2016-07-01 09:45:00"
+        ],
+        [
+          "2016-07-02 09:00:00",
+          "2016-07-02 09:45:00"
+        ],
+        [
+          "2016-07-03 09:00:00",
+          "2016-07-03 09:45:00"
+        ],
+        [
+          "2016-07-04 09:00:00",
+          "2016-07-04 09:45:00"
+        ],
+        [
+          "2016-07-05 09:00:00",
+          "2016-07-05 09:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 12
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.06111111111111111,
+      "evidence_windows": [
+        [
+          "2016-07-01 12:00:00",
+          "2016-07-01 12:45:00"
+        ],
+        [
+          "2016-07-02 12:00:00",
+          "2016-07-02 12:45:00"
+        ],
+        [
+          "2016-07-03 12:00:00",
+          "2016-07-03 12:45:00"
+        ],
+        [
+          "2016-07-04 12:00:00",
+          "2016-07-04 12:45:00"
+        ],
+        [
+          "2016-07-05 12:00:00",
+          "2016-07-05 12:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "weekday",
+        "weekday": 0
+      },
+      "support_count": 4896,
+      "coverage_ratio": 0.14166666666666666,
+      "precision_on_train": 0.06025326797385621,
+      "evidence_windows": [
+        [
+          "2016-07-04 00:00:00",
+          "2016-07-04 23:45:00"
+        ],
+        [
+          "2016-07-11 00:00:00",
+          "2016-07-11 23:45:00"
+        ],
+        [
+          "2016-07-18 00:00:00",
+          "2016-07-18 23:45:00"
+        ],
+        [
+          "2016-07-25 00:00:00",
+          "2016-07-25 23:45:00"
+        ],
+        [
+          "2016-08-01 00:00:00",
+          "2016-08-01 23:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 10
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.059722222222222225,
+      "evidence_windows": [
+        [
+          "2016-07-01 10:00:00",
+          "2016-07-01 10:45:00"
+        ],
+        [
+          "2016-07-02 10:00:00",
+          "2016-07-02 10:45:00"
+        ],
+        [
+          "2016-07-03 10:00:00",
+          "2016-07-03 10:45:00"
+        ],
+        [
+          "2016-07-04 10:00:00",
+          "2016-07-04 10:45:00"
+        ],
+        [
+          "2016-07-05 10:00:00",
+          "2016-07-05 10:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 20
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.059722222222222225,
+      "evidence_windows": [
+        [
+          "2016-07-01 20:00:00",
+          "2016-07-01 20:45:00"
+        ],
+        [
+          "2016-07-02 20:00:00",
+          "2016-07-02 20:45:00"
+        ],
+        [
+          "2016-07-03 20:00:00",
+          "2016-07-03 20:45:00"
+        ],
+        [
+          "2016-07-04 20:00:00",
+          "2016-07-04 20:45:00"
+        ],
+        [
+          "2016-07-05 20:00:00",
+          "2016-07-05 20:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 13
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.05694444444444444,
+      "evidence_windows": [
+        [
+          "2016-07-01 13:00:00",
+          "2016-07-01 13:45:00"
+        ],
+        [
+          "2016-07-02 13:00:00",
+          "2016-07-02 13:45:00"
+        ],
+        [
+          "2016-07-03 13:00:00",
+          "2016-07-03 13:45:00"
+        ],
+        [
+          "2016-07-04 13:00:00",
+          "2016-07-04 13:45:00"
+        ],
+        [
+          "2016-07-05 13:00:00",
+          "2016-07-05 13:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 14
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.05694444444444444,
+      "evidence_windows": [
+        [
+          "2016-07-01 14:00:00",
+          "2016-07-01 14:45:00"
+        ],
+        [
+          "2016-07-02 14:00:00",
+          "2016-07-02 14:45:00"
+        ],
+        [
+          "2016-07-03 14:00:00",
+          "2016-07-03 14:45:00"
+        ],
+        [
+          "2016-07-04 14:00:00",
+          "2016-07-04 14:45:00"
+        ],
+        [
+          "2016-07-05 14:00:00",
+          "2016-07-05 14:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "calendar_periodic",
+        "anchor": "2016-07-01 00:00:00",
+        "month_interval": 2,
+        "day": 1
+      },
+      "support_count": 576,
+      "coverage_ratio": 0.016666666666666666,
+      "precision_on_train": 0.05555555555555555,
+      "evidence_windows": [
+        [
+          "2016-07-01 00:00:00",
+          "2016-07-01 23:45:00"
+        ],
+        [
+          "2016-09-01 00:00:00",
+          "2016-09-01 23:45:00"
+        ],
+        [
+          "2016-11-01 00:00:00",
+          "2016-11-01 23:45:00"
+        ],
+        [
+          "2017-01-01 00:00:00",
+          "2017-01-01 23:45:00"
+        ],
+        [
+          "2017-03-01 00:00:00",
+          "2017-03-01 23:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 21
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.05486111111111111,
+      "evidence_windows": [
+        [
+          "2016-07-01 21:00:00",
+          "2016-07-01 21:45:00"
+        ],
+        [
+          "2016-07-02 21:00:00",
+          "2016-07-02 21:45:00"
+        ],
+        [
+          "2016-07-03 21:00:00",
+          "2016-07-03 21:45:00"
+        ],
+        [
+          "2016-07-04 21:00:00",
+          "2016-07-04 21:45:00"
+        ],
+        [
+          "2016-07-05 21:00:00",
+          "2016-07-05 21:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 11
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.052083333333333336,
+      "evidence_windows": [
+        [
+          "2016-07-01 11:00:00",
+          "2016-07-01 11:45:00"
+        ],
+        [
+          "2016-07-02 11:00:00",
+          "2016-07-02 11:45:00"
+        ],
+        [
+          "2016-07-03 11:00:00",
+          "2016-07-03 11:45:00"
+        ],
+        [
+          "2016-07-04 11:00:00",
+          "2016-07-04 11:45:00"
+        ],
+        [
+          "2016-07-05 11:00:00",
+          "2016-07-05 11:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 19
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.05138888888888889,
+      "evidence_windows": [
+        [
+          "2016-07-01 19:00:00",
+          "2016-07-01 19:45:00"
+        ],
+        [
+          "2016-07-02 19:00:00",
+          "2016-07-02 19:45:00"
+        ],
+        [
+          "2016-07-03 19:00:00",
+          "2016-07-03 19:45:00"
+        ],
+        [
+          "2016-07-04 19:00:00",
+          "2016-07-04 19:45:00"
+        ],
+        [
+          "2016-07-05 19:00:00",
+          "2016-07-05 19:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 2
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.05,
+      "evidence_windows": [
+        [
+          "2016-07-01 02:00:00",
+          "2016-07-01 02:45:00"
+        ],
+        [
+          "2016-07-02 02:00:00",
+          "2016-07-02 02:45:00"
+        ],
+        [
+          "2016-07-03 02:00:00",
+          "2016-07-03 02:45:00"
+        ],
+        [
+          "2016-07-04 02:00:00",
+          "2016-07-04 02:45:00"
+        ],
+        [
+          "2016-07-05 02:00:00",
+          "2016-07-05 02:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 7
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.05,
+      "evidence_windows": [
+        [
+          "2016-07-01 07:00:00",
+          "2016-07-01 07:45:00"
+        ],
+        [
+          "2016-07-02 07:00:00",
+          "2016-07-02 07:45:00"
+        ],
+        [
+          "2016-07-03 07:00:00",
+          "2016-07-03 07:45:00"
+        ],
+        [
+          "2016-07-04 07:00:00",
+          "2016-07-04 07:45:00"
+        ],
+        [
+          "2016-07-05 07:00:00",
+          "2016-07-05 07:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 5
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.04861111111111111,
+      "evidence_windows": [
+        [
+          "2016-07-01 05:00:00",
+          "2016-07-01 05:45:00"
+        ],
+        [
+          "2016-07-02 05:00:00",
+          "2016-07-02 05:45:00"
+        ],
+        [
+          "2016-07-03 05:00:00",
+          "2016-07-03 05:45:00"
+        ],
+        [
+          "2016-07-04 05:00:00",
+          "2016-07-04 05:45:00"
+        ],
+        [
+          "2016-07-05 05:00:00",
+          "2016-07-05 05:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 3
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.04652777777777778,
+      "evidence_windows": [
+        [
+          "2016-07-01 03:00:00",
+          "2016-07-01 03:45:00"
+        ],
+        [
+          "2016-07-02 03:00:00",
+          "2016-07-02 03:45:00"
+        ],
+        [
+          "2016-07-03 03:00:00",
+          "2016-07-03 03:45:00"
+        ],
+        [
+          "2016-07-04 03:00:00",
+          "2016-07-04 03:45:00"
+        ],
+        [
+          "2016-07-05 03:00:00",
+          "2016-07-05 03:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 18
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.04652777777777778,
+      "evidence_windows": [
+        [
+          "2016-07-01 18:00:00",
+          "2016-07-01 18:45:00"
+        ],
+        [
+          "2016-07-02 18:00:00",
+          "2016-07-02 18:45:00"
+        ],
+        [
+          "2016-07-03 18:00:00",
+          "2016-07-03 18:45:00"
+        ],
+        [
+          "2016-07-04 18:00:00",
+          "2016-07-04 18:45:00"
+        ],
+        [
+          "2016-07-05 18:00:00",
+          "2016-07-05 18:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 6
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.04583333333333333,
+      "evidence_windows": [
+        [
+          "2016-07-01 06:00:00",
+          "2016-07-01 06:45:00"
+        ],
+        [
+          "2016-07-02 06:00:00",
+          "2016-07-02 06:45:00"
+        ],
+        [
+          "2016-07-03 06:00:00",
+          "2016-07-03 06:45:00"
+        ],
+        [
+          "2016-07-04 06:00:00",
+          "2016-07-04 06:45:00"
+        ],
+        [
+          "2016-07-05 06:00:00",
+          "2016-07-05 06:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 1
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.044444444444444446,
+      "evidence_windows": [
+        [
+          "2016-07-01 01:00:00",
+          "2016-07-01 01:45:00"
+        ],
+        [
+          "2016-07-02 01:00:00",
+          "2016-07-02 01:45:00"
+        ],
+        [
+          "2016-07-03 01:00:00",
+          "2016-07-03 01:45:00"
+        ],
+        [
+          "2016-07-04 01:00:00",
+          "2016-07-04 01:45:00"
+        ],
+        [
+          "2016-07-05 01:00:00",
+          "2016-07-05 01:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 4
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.04027777777777778,
+      "evidence_windows": [
+        [
+          "2016-07-01 04:00:00",
+          "2016-07-01 04:45:00"
+        ],
+        [
+          "2016-07-02 04:00:00",
+          "2016-07-02 04:45:00"
+        ],
+        [
+          "2016-07-03 04:00:00",
+          "2016-07-03 04:45:00"
+        ],
+        [
+          "2016-07-04 04:00:00",
+          "2016-07-04 04:45:00"
+        ],
+        [
+          "2016-07-05 04:00:00",
+          "2016-07-05 04:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 23
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.04027777777777778,
+      "evidence_windows": [
+        [
+          "2016-07-01 23:00:00",
+          "2016-07-01 23:45:00"
+        ],
+        [
+          "2016-07-02 23:00:00",
+          "2016-07-02 23:45:00"
+        ],
+        [
+          "2016-07-03 23:00:00",
+          "2016-07-03 23:45:00"
+        ],
+        [
+          "2016-07-04 23:00:00",
+          "2016-07-04 23:45:00"
+        ],
+        [
+          "2016-07-05 23:00:00",
+          "2016-07-05 23:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "calendar_periodic",
+        "day": 1
+      },
+      "support_count": 1152,
+      "coverage_ratio": 0.03333333333333333,
+      "precision_on_train": 0.03732638888888889,
+      "evidence_windows": [
+        [
+          "2016-07-01 00:00:00",
+          "2016-07-01 23:45:00"
+        ],
+        [
+          "2016-08-01 00:00:00",
+          "2016-08-01 23:45:00"
+        ],
+        [
+          "2016-09-01 00:00:00",
+          "2016-09-01 23:45:00"
+        ],
+        [
+          "2016-10-01 00:00:00",
+          "2016-10-01 23:45:00"
+        ],
+        [
+          "2016-11-01 00:00:00",
+          "2016-11-01 23:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 17
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.03680555555555556,
+      "evidence_windows": [
+        [
+          "2016-07-01 17:00:00",
+          "2016-07-01 17:45:00"
+        ],
+        [
+          "2016-07-02 17:00:00",
+          "2016-07-02 17:45:00"
+        ],
+        [
+          "2016-07-03 17:00:00",
+          "2016-07-03 17:45:00"
+        ],
+        [
+          "2016-07-04 17:00:00",
+          "2016-07-04 17:45:00"
+        ],
+        [
+          "2016-07-05 17:00:00",
+          "2016-07-05 17:45:00"
+        ]
+      ]
+    },
+    {
+      "condition_candidate": {
+        "kind": "hour",
+        "hour": 0
+      },
+      "support_count": 1440,
+      "coverage_ratio": 0.041666666666666664,
+      "precision_on_train": 0.029861111111111113,
+      "evidence_windows": [
+        [
+          "2016-07-01 00:00:00",
+          "2016-07-01 00:45:00"
+        ],
+        [
+          "2016-07-02 00:00:00",
+          "2016-07-02 00:45:00"
+        ],
+        [
+          "2016-07-03 00:00:00",
+          "2016-07-03 00:45:00"
+        ],
+        [
+          "2016-07-04 00:00:00",
+          "2016-07-04 00:45:00"
+        ],
+        [
+          "2016-07-05 00:00:00",
+          "2016-07-05 00:45:00"
+        ]
+      ]
+    }
+  ],
+  "peak_event_candidates": [
+    {
+      "pattern_type": "peak_event_candidate",
+      "condition_candidate": {
+        "kind": "hourly",
+        "hour": 0
+      },
+      "peak_hour": 0,
+      "affected_variables": [
+        "HUFL"
+      ],
+      "mean_peak_strength": 2.7113465275718927,
+      "support_count": 1440,
+      "evidence_windows": [
+        [
+          "2016-07-01 00:00:00",
+          "2016-07-01 00:45:00"
+        ],
+        [
+          "2016-07-02 00:00:00",
+          "2016-07-02 00:45:00"
+        ],
+        [
+          "2016-07-03 00:00:00",
+          "2016-07-03 00:45:00"
+        ],
+        [
+          "2016-07-04 00:00:00",
+          "2016-07-04 00:45:00"
+        ],
+        [
+          "2016-07-05 00:00:00",
+          "2016-07-05 00:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "peak_event_candidate",
+      "condition_candidate": {
+        "kind": "hourly",
+        "hour": 0
+      },
+      "peak_hour": 0,
+      "affected_variables": [
+        "HULL"
+      ],
+      "mean_peak_strength": 0.4736177115287217,
+      "support_count": 1440,
+      "evidence_windows": [
+        [
+          "2016-07-01 00:00:00",
+          "2016-07-01 00:45:00"
+        ],
+        [
+          "2016-07-02 00:00:00",
+          "2016-07-02 00:45:00"
+        ],
+        [
+          "2016-07-03 00:00:00",
+          "2016-07-03 00:45:00"
+        ],
+        [
+          "2016-07-04 00:00:00",
+          "2016-07-04 00:45:00"
+        ],
+        [
+          "2016-07-05 00:00:00",
+          "2016-07-05 00:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "peak_event_candidate",
+      "condition_candidate": {
+        "kind": "hourly",
+        "hour": 0
+      },
+      "peak_hour": 0,
+      "affected_variables": [
+        "MUFL"
+      ],
+      "mean_peak_strength": 2.8515454725672793,
+      "support_count": 1440,
+      "evidence_windows": [
+        [
+          "2016-07-01 00:00:00",
+          "2016-07-01 00:45:00"
+        ],
+        [
+          "2016-07-02 00:00:00",
+          "2016-07-02 00:45:00"
+        ],
+        [
+          "2016-07-03 00:00:00",
+          "2016-07-03 00:45:00"
+        ],
+        [
+          "2016-07-04 00:00:00",
+          "2016-07-04 00:45:00"
+        ],
+        [
+          "2016-07-05 00:00:00",
+          "2016-07-05 00:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "peak_event_candidate",
+      "condition_candidate": {
+        "kind": "hourly",
+        "hour": 0
+      },
+      "peak_hour": 0,
+      "affected_variables": [
+        "MULL"
+      ],
+      "mean_peak_strength": 0.43965625383166795,
+      "support_count": 1440,
+      "evidence_windows": [
+        [
+          "2016-07-01 00:00:00",
+          "2016-07-01 00:45:00"
+        ],
+        [
+          "2016-07-02 00:00:00",
+          "2016-07-02 00:45:00"
+        ],
+        [
+          "2016-07-03 00:00:00",
+          "2016-07-03 00:45:00"
+        ],
+        [
+          "2016-07-04 00:00:00",
+          "2016-07-04 00:45:00"
+        ],
+        [
+          "2016-07-05 00:00:00",
+          "2016-07-05 00:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "peak_event_candidate",
+      "condition_candidate": {
+        "kind": "hourly",
+        "hour": 7
+      },
+      "peak_hour": 7,
+      "affected_variables": [
+        "LUFL"
+      ],
+      "mean_peak_strength": 0.6273552112281324,
+      "support_count": 1440,
+      "evidence_windows": [
+        [
+          "2016-07-01 07:00:00",
+          "2016-07-01 07:45:00"
+        ],
+        [
+          "2016-07-02 07:00:00",
+          "2016-07-02 07:45:00"
+        ],
+        [
+          "2016-07-03 07:00:00",
+          "2016-07-03 07:45:00"
+        ],
+        [
+          "2016-07-04 07:00:00",
+          "2016-07-04 07:45:00"
+        ],
+        [
+          "2016-07-05 07:00:00",
+          "2016-07-05 07:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "peak_event_candidate",
+      "condition_candidate": {
+        "kind": "hourly",
+        "hour": 7
+      },
+      "peak_hour": 7,
+      "affected_variables": [
+        "LULL"
+      ],
+      "mean_peak_strength": 0.16825138896108705,
+      "support_count": 1440,
+      "evidence_windows": [
+        [
+          "2016-07-01 07:00:00",
+          "2016-07-01 07:45:00"
+        ],
+        [
+          "2016-07-02 07:00:00",
+          "2016-07-02 07:45:00"
+        ],
+        [
+          "2016-07-03 07:00:00",
+          "2016-07-03 07:45:00"
+        ],
+        [
+          "2016-07-04 07:00:00",
+          "2016-07-04 07:45:00"
+        ],
+        [
+          "2016-07-05 07:00:00",
+          "2016-07-05 07:45:00"
+        ]
+      ]
+    },
+    {
+      "pattern_type": "peak_event_candidate",
+      "condition_candidate": {
+        "kind": "hourly",
+        "hour": 16
+      },
+      "peak_hour": 16,
+      "affected_variables": [
+        "OT"
+      ],
+      "mean_peak_strength": 1.7789944363550987,
+      "support_count": 1440,
+      "evidence_windows": [
+        [
+          "2016-07-01 16:00:00",
+          "2016-07-01 16:45:00"
+        ],
+        [
+          "2016-07-02 16:00:00",
+          "2016-07-02 16:45:00"
+        ],
+        [
+          "2016-07-03 16:00:00",
+          "2016-07-03 16:45:00"
+        ],
+        [
+          "2016-07-04 16:00:00",
+          "2016-07-04 16:45:00"
+        ],
+        [
+          "2016-07-05 16:00:00",
+          "2016-07-05 16:45:00"
+        ]
+      ]
+    }
+  ],
+  "long_tail_candidates": [
+    {
+      "pattern_type": "rare_peak_regime",
+      "rarity_score": 0.9583333333333334,
+      "importance_score": 2.7327310778769762,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "peak_shape"
+      ],
+      "source": {
+        "pattern_type": "peak_event_candidate",
+        "condition_candidate": {
+          "kind": "hourly",
+          "hour": 0
+        },
+        "peak_hour": 0,
+        "affected_variables": [
+          "MUFL"
+        ],
+        "mean_peak_strength": 2.8515454725672793,
+        "support_count": 1440,
+        "evidence_windows": [
+          [
+            "2016-07-01 00:00:00",
+            "2016-07-01 00:45:00"
+          ],
+          [
+            "2016-07-02 00:00:00",
+            "2016-07-02 00:45:00"
+          ],
+          [
+            "2016-07-03 00:00:00",
+            "2016-07-03 00:45:00"
+          ],
+          [
+            "2016-07-04 00:00:00",
+            "2016-07-04 00:45:00"
+          ],
+          [
+            "2016-07-05 00:00:00",
+            "2016-07-05 00:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_peak_regime",
+      "rarity_score": 0.9583333333333334,
+      "importance_score": 2.5983737555897304,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "peak_shape"
+      ],
+      "source": {
+        "pattern_type": "peak_event_candidate",
+        "condition_candidate": {
+          "kind": "hourly",
+          "hour": 0
+        },
+        "peak_hour": 0,
+        "affected_variables": [
+          "HUFL"
+        ],
+        "mean_peak_strength": 2.7113465275718927,
+        "support_count": 1440,
+        "evidence_windows": [
+          [
+            "2016-07-01 00:00:00",
+            "2016-07-01 00:45:00"
+          ],
+          [
+            "2016-07-02 00:00:00",
+            "2016-07-02 00:45:00"
+          ],
+          [
+            "2016-07-03 00:00:00",
+            "2016-07-03 00:45:00"
+          ],
+          [
+            "2016-07-04 00:00:00",
+            "2016-07-04 00:45:00"
+          ],
+          [
+            "2016-07-05 00:00:00",
+            "2016-07-05 00:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_peak_regime",
+      "rarity_score": 0.9583333333333334,
+      "importance_score": 1.7048696681736364,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "peak_shape"
+      ],
+      "source": {
+        "pattern_type": "peak_event_candidate",
+        "condition_candidate": {
+          "kind": "hourly",
+          "hour": 16
+        },
+        "peak_hour": 16,
+        "affected_variables": [
+          "OT"
+        ],
+        "mean_peak_strength": 1.7789944363550987,
+        "support_count": 1440,
+        "evidence_windows": [
+          [
+            "2016-07-01 16:00:00",
+            "2016-07-01 16:45:00"
+          ],
+          [
+            "2016-07-02 16:00:00",
+            "2016-07-02 16:45:00"
+          ],
+          [
+            "2016-07-03 16:00:00",
+            "2016-07-03 16:45:00"
+          ],
+          [
+            "2016-07-04 16:00:00",
+            "2016-07-04 16:45:00"
+          ],
+          [
+            "2016-07-05 16:00:00",
+            "2016-07-05 16:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9998553240740741,
+      "importance_score": 0.9998553240740741,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2016-12-17 14:45:00",
+        "end_time": "2016-12-17 15:45:00",
+        "duration": 5,
+        "affected_variables": [
+          "HULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2016-12-17 14:45:00",
+            "2016-12-17 15:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9998263888888889,
+      "importance_score": 0.9998263888888889,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2017-06-13 19:30:00",
+        "end_time": "2017-06-13 20:45:00",
+        "duration": 6,
+        "affected_variables": [
+          "HULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2017-06-13 19:30:00",
+            "2017-06-13 20:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9997974537037037,
+      "importance_score": 0.9997974537037037,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2017-01-21 19:15:00",
+        "end_time": "2017-01-21 20:45:00",
+        "duration": 7,
+        "affected_variables": [
+          "HULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2017-01-21 19:15:00",
+            "2017-01-21 20:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9997974537037037,
+      "importance_score": 0.9997974537037037,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2017-05-24 03:45:00",
+        "end_time": "2017-05-24 05:15:00",
+        "duration": 7,
+        "affected_variables": [
+          "MULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2017-05-24 03:45:00",
+            "2017-05-24 05:15:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9997974537037037,
+      "importance_score": 0.9997974537037037,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2017-06-23 19:15:00",
+        "end_time": "2017-06-23 20:45:00",
+        "duration": 7,
+        "affected_variables": [
+          "MULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2017-06-23 19:15:00",
+            "2017-06-23 20:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9997974537037037,
+      "importance_score": 0.9997974537037037,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2016-12-06 00:15:00",
+        "end_time": "2016-12-06 01:45:00",
+        "duration": 7,
+        "affected_variables": [
+          "OT"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2016-12-06 00:15:00",
+            "2016-12-06 01:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9997685185185186,
+      "importance_score": 0.9997685185185186,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2017-01-30 19:15:00",
+        "end_time": "2017-01-30 21:00:00",
+        "duration": 8,
+        "affected_variables": [
+          "HULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2017-01-30 19:15:00",
+            "2017-01-30 21:00:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9997685185185186,
+      "importance_score": 0.9997685185185186,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2017-05-04 19:30:00",
+        "end_time": "2017-05-04 21:15:00",
+        "duration": 8,
+        "affected_variables": [
+          "HULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2017-05-04 19:30:00",
+            "2017-05-04 21:15:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9997685185185186,
+      "importance_score": 0.9997685185185186,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2016-07-25 08:45:00",
+        "end_time": "2016-07-25 10:30:00",
+        "duration": 8,
+        "affected_variables": [
+          "MULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2016-07-25 08:45:00",
+            "2016-07-25 10:30:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9995659722222222,
+      "importance_score": 0.9995659722222222,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2017-05-23 23:45:00",
+        "end_time": "2017-05-24 03:15:00",
+        "duration": 15,
+        "affected_variables": [
+          "MULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2017-05-23 23:45:00",
+            "2017-05-24 03:15:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9994502314814815,
+      "importance_score": 0.9994502314814815,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2016-08-03 10:15:00",
+        "end_time": "2016-08-03 14:45:00",
+        "duration": 19,
+        "affected_variables": [
+          "MULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2016-08-03 10:15:00",
+            "2016-08-03 14:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9994212962962963,
+      "importance_score": 0.9994212962962963,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2016-08-03 10:30:00",
+        "end_time": "2016-08-03 15:15:00",
+        "duration": 20,
+        "affected_variables": [
+          "MUFL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2016-08-03 10:30:00",
+            "2016-08-03 15:15:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9993923611111111,
+      "importance_score": 0.9993923611111111,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2016-12-06 11:15:00",
+        "end_time": "2016-12-06 16:15:00",
+        "duration": 21,
+        "affected_variables": [
+          "OT"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2016-12-06 11:15:00",
+            "2016-12-06 16:15:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.997193287037037,
+      "importance_score": 0.997193287037037,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2017-03-30 23:45:00",
+        "end_time": "2017-03-31 23:45:00",
+        "duration": 97,
+        "affected_variables": [
+          "HULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2017-03-30 23:45:00",
+            "2017-03-31 23:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9932291666666667,
+      "importance_score": 0.9932291666666667,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2016-12-05 08:30:00",
+        "end_time": "2016-12-07 18:45:00",
+        "duration": 234,
+        "affected_variables": [
+          "HULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2016-12-05 08:30:00",
+            "2016-12-07 18:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9932002314814815,
+      "importance_score": 0.9932002314814815,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2016-12-05 08:15:00",
+        "end_time": "2016-12-07 18:45:00",
+        "duration": 235,
+        "affected_variables": [
+          "HUFL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2016-12-05 08:15:00",
+            "2016-12-07 18:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9931423611111111,
+      "importance_score": 0.9931423611111111,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2016-12-05 08:15:00",
+        "end_time": "2016-12-07 19:15:00",
+        "duration": 237,
+        "affected_variables": [
+          "LUFL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2016-12-05 08:15:00",
+            "2016-12-07 19:15:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9931423611111111,
+      "importance_score": 0.9931423611111111,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2016-12-05 08:15:00",
+        "end_time": "2016-12-07 19:15:00",
+        "duration": 237,
+        "affected_variables": [
+          "LULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2016-12-05 08:15:00",
+            "2016-12-07 19:15:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9916087962962963,
+      "importance_score": 0.9916087962962963,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2016-12-05 07:15:00",
+        "end_time": "2016-12-08 07:30:00",
+        "duration": 290,
+        "affected_variables": [
+          "MULL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2016-12-05 07:15:00",
+            "2016-12-08 07:30:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_zero_regime",
+      "rarity_score": 0.9915219907407408,
+      "importance_score": 0.9915219907407408,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "zero_consistency"
+      ],
+      "source": {
+        "pattern_type": "zero_event_candidate",
+        "start_time": "2016-12-05 06:30:00",
+        "end_time": "2016-12-08 07:30:00",
+        "duration": 293,
+        "affected_variables": [
+          "MUFL"
+        ],
+        "zero_ratio": 1.0,
+        "mean_abs_value": 0.0,
+        "support_evidence": [
+          [
+            "2016-12-05 06:30:00",
+            "2016-12-08 07:30:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_peak_regime",
+      "rarity_score": 0.9583333333333334,
+      "importance_score": 0.6012154107602936,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "peak_shape"
+      ],
+      "source": {
+        "pattern_type": "peak_event_candidate",
+        "condition_candidate": {
+          "kind": "hourly",
+          "hour": 7
+        },
+        "peak_hour": 7,
+        "affected_variables": [
+          "LUFL"
+        ],
+        "mean_peak_strength": 0.6273552112281324,
+        "support_count": 1440,
+        "evidence_windows": [
+          [
+            "2016-07-01 07:00:00",
+            "2016-07-01 07:45:00"
+          ],
+          [
+            "2016-07-02 07:00:00",
+            "2016-07-02 07:45:00"
+          ],
+          [
+            "2016-07-03 07:00:00",
+            "2016-07-03 07:45:00"
+          ],
+          [
+            "2016-07-04 07:00:00",
+            "2016-07-04 07:45:00"
+          ],
+          [
+            "2016-07-05 07:00:00",
+            "2016-07-05 07:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_peak_regime",
+      "rarity_score": 0.9583333333333334,
+      "importance_score": 0.453883640215025,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "peak_shape"
+      ],
+      "source": {
+        "pattern_type": "peak_event_candidate",
+        "condition_candidate": {
+          "kind": "hourly",
+          "hour": 0
+        },
+        "peak_hour": 0,
+        "affected_variables": [
+          "HULL"
+        ],
+        "mean_peak_strength": 0.4736177115287217,
+        "support_count": 1440,
+        "evidence_windows": [
+          [
+            "2016-07-01 00:00:00",
+            "2016-07-01 00:45:00"
+          ],
+          [
+            "2016-07-02 00:00:00",
+            "2016-07-02 00:45:00"
+          ],
+          [
+            "2016-07-03 00:00:00",
+            "2016-07-03 00:45:00"
+          ],
+          [
+            "2016-07-04 00:00:00",
+            "2016-07-04 00:45:00"
+          ],
+          [
+            "2016-07-05 00:00:00",
+            "2016-07-05 00:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_peak_regime",
+      "rarity_score": 0.9583333333333334,
+      "importance_score": 0.4213372432553485,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "peak_shape"
+      ],
+      "source": {
+        "pattern_type": "peak_event_candidate",
+        "condition_candidate": {
+          "kind": "hourly",
+          "hour": 0
+        },
+        "peak_hour": 0,
+        "affected_variables": [
+          "MULL"
+        ],
+        "mean_peak_strength": 0.43965625383166795,
+        "support_count": 1440,
+        "evidence_windows": [
+          [
+            "2016-07-01 00:00:00",
+            "2016-07-01 00:45:00"
+          ],
+          [
+            "2016-07-02 00:00:00",
+            "2016-07-02 00:45:00"
+          ],
+          [
+            "2016-07-03 00:00:00",
+            "2016-07-03 00:45:00"
+          ],
+          [
+            "2016-07-04 00:00:00",
+            "2016-07-04 00:45:00"
+          ],
+          [
+            "2016-07-05 00:00:00",
+            "2016-07-05 00:45:00"
+          ]
+        ]
+      }
+    },
+    {
+      "pattern_type": "rare_peak_regime",
+      "rarity_score": 0.9583333333333334,
+      "importance_score": 0.16124091442104177,
+      "candidate_loss_templates": [
+        "event_weighted_mse",
+        "peak_shape"
+      ],
+      "source": {
+        "pattern_type": "peak_event_candidate",
+        "condition_candidate": {
+          "kind": "hourly",
+          "hour": 7
+        },
+        "peak_hour": 7,
+        "affected_variables": [
+          "LULL"
+        ],
+        "mean_peak_strength": 0.16825138896108705,
+        "support_count": 1440,
+        "evidence_windows": [
+          [
+            "2016-07-01 07:00:00",
+            "2016-07-01 07:45:00"
+          ],
+          [
+            "2016-07-02 07:00:00",
+            "2016-07-02 07:45:00"
+          ],
+          [
+            "2016-07-03 07:00:00",
+            "2016-07-03 07:45:00"
+          ],
+          [
+            "2016-07-04 07:00:00",
+            "2016-07-04 07:45:00"
+          ],
+          [
+            "2016-07-05 07:00:00",
+            "2016-07-05 07:45:00"
+          ]
+        ]
+      }
+    }
+  ]
+}

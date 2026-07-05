@@ -1,0 +1,3 @@
+Experiment,Overall MSE,Overall MAE,Original MSE,Original MAE,Event MSE,Zero MSE,Rule Score,Event Points,Zero Points,Notes,Path
+ettm1_core_dataset_aware_loss,0.3663480877876282,0.38734644651412964,7.775156497955322,1.4302791357040405,0.4488643767341387,0.4488643767341387,0.6130116472076558,129024,129024,dataset_aware_loss,results\long_term_forecast_DLinear_ETTm1_ftM_sl336_ll48_pl96_ettm1_core_dataset_aware_loss_0
+ettm1_core_pure_dlinear,0.3070307970046997,0.35280048847198486,6.433851718902588,1.2998449802398682,0.6213584778800362,0.6213584778800362,0.5863107006437542,129024,129024,pure_dlinear,results\long_term_forecast_DLinear_ETTm1_ftM_sl336_ll48_pl96_ettm1_core_pure_dlinear_0

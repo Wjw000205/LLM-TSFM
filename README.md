@@ -181,11 +181,50 @@ Do not use `ETTm1_rules.json` as an ETTh1 full-method substitute.
 Use `llm_miner/` to create train-only summaries and prompts:
 
 ```bash
-python -m llm_miner.build_dataset_summary --root_path ./data/ --data_path ETTm1.csv --data ETTm1 --target OT --seq_len 96 --output_path llm_miner/outputs/ETTm1_summary.json
-python -m llm_miner.build_llm_prompt --summary_path llm_miner/outputs/ETTm1_summary.json --output_path llm_miner/outputs/ETTm1_prompt.txt
+python -m llm_miner.run_miner \
+  --data ETTm1 \
+  --root_path ./data/ \
+  --data_path ETTm1.csv \
+  --features M \
+  --target OT \
+  --seq_len 336 \
+  --pred_len 96 \
+  --output_dir ./artifacts/llm_miner/ETTm1
 ```
 
 Validation and test rows must not be used for rule mining.
+
+The miner generates `dataset_summary.json`, `candidate_rules.json`, train-only figures, and `llm_prompt.md`. It does
+not call a real LLM API. Save a manually obtained response and parse it with:
+
+```bash
+python -m llm_miner.parse_llm_response \
+  --response_path ./artifacts/llm_miner/ETTm1/llm_response.json \
+  --output_rule_path ./llm_rules/generated_rules/ETTm1_rules.json
+python -m llm_miner.validate_rules \
+  --rule_path ./llm_rules/generated_rules/ETTm1_rules.json \
+  --data ETTm1 \
+  --root_path ./data/ \
+  --data_path ETTm1.csv \
+  --features M \
+  --target OT \
+  --seq_len 336 \
+  --output_dir ./artifacts/llm_miner/ETTm1
+```
+
+## Core Innovation Experiments
+
+Run the ETTm1 long-tail rule ablation:
+
+```bash
+bash scripts/run_ettm1_core_innovation.sh
+```
+
+Summarize finished runs:
+
+```bash
+python analysis/summarize_core_results.py --results_root ./results --filter ettm1_core
+```
 
 ## Outputs
 

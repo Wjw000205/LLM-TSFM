@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "rule_path": "./llm_rules/example_rules/ETTm1_rules.json",
+  "dataset_name": "ETTm1",
+  "expected_dataset": "ETTm1",
+  "analysis_scope": null,
+  "train_start_time": "2016-07-01 00:00:00",
+  "train_end_time": "2017-06-25 23:45:00",
+  "errors": [],
+  "warnings": []
+}

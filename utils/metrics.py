@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 
 
@@ -55,6 +57,11 @@ def metric(pred, true, masks=None) -> dict[str, float]:
     result["peak_event_mse"] = _masked_metric(pred, true, peak_mask, squared=True)
     result["peak_event_mae"] = _masked_metric(pred, true, peak_mask, squared=False)
     result["rule_consistency_score"] = _rule_consistency_score(pred, zero_mask, peak_mask)
+    result["num_event_points"] = int(event_mask.sum())
+    result["num_zero_event_points"] = int(zero_mask.sum())
+    result["num_peak_event_points"] = int(peak_mask.sum())
+    if result["num_event_points"] == 0 and result["num_zero_event_points"] == 0 and result["num_peak_event_points"] == 0:
+        warnings.warn("Event mask is empty; event-window metrics are zero by construction.", UserWarning, stacklevel=2)
     return result
 
 
