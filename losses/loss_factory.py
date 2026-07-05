@@ -10,9 +10,12 @@ from losses.dataset_aware_loss import DatasetAwareLoss
 
 def build_loss(args: Namespace) -> DatasetAwareLoss:
     """Build the configured training criterion."""
-    config = vars(args).copy()
+    args_config = vars(args).copy()
     rules = parse_llm_rules(getattr(args, "llm_rule_path", None))
-    config.update(loss_config_from_rules(rules))
+    config = loss_config_from_rules(rules)
+    for key, value in args_config.items():
+        if value is not None:
+            config[key] = value
 
     if not _flag(config.get("use_dataset_aware_loss", False)):
         config.update(

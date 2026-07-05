@@ -57,6 +57,7 @@ class DLinear(nn.Module):
         self.c_out = int(cfg.get("c_out", self.enc_in))
         self.individual = _flag(cfg.get("individual", False))
         self.use_revin = _flag(cfg.get("use_revin", False))
+        self.dlinear_init_avg = _flag(cfg.get("dlinear_init_avg", False))
         self.revin_dim = int(cfg.get("raw_input_dim", min(self.enc_in, self.c_out)))
         self.revin_dim = max(1, min(self.revin_dim, self.enc_in))
         self.target_indices = list(cfg.get("target_indices", range(min(self.c_out, self.revin_dim))))
@@ -73,7 +74,8 @@ class DLinear(nn.Module):
         if self.c_out != self.enc_in:
             self.channel_projection = nn.Linear(self.enc_in, self.c_out)
         self.revin = RevIN(self.revin_dim) if self.use_revin else None
-        self._reset_parameters()
+        if self.dlinear_init_avg:
+            self._reset_parameters()
 
     def forward(self, x):
         """Forecast future values from ``x`` shaped ``[B, seq_len, C]``."""

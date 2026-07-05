@@ -30,6 +30,12 @@ class DatasetAwareLoss(nn.Module):
         self.peak_weight = float(self.config.get("peak_weight", 1.0))
         self.diff_weight = float(self.config.get("diff_weight", 1.0))
         self.freq_weight = float(self.config.get("freq_weight", 1.0))
+        self.peak_window_size = max(1, int(self.config.get("peak_window_size", 1)))
+        zero_target = self.config.get("zero_target", None)
+        if zero_target is None:
+            self.zero_target = None
+        else:
+            self.register_buffer("zero_target", torch.as_tensor(zero_target, dtype=torch.float32).view(1, 1, -1))
 
     def forward(self, pred, true, batch_marks=None, batch_masks=None):
         """Return total loss and every component as tensors."""
@@ -85,6 +91,14 @@ class DatasetAwareLoss(nn.Module):
         mask = _to_mask(batch_masks, pred)
         if mask is None:
             return {"event": None, "zero": None, "peak": None}
+        if mask.ndim == 4:
+            if mask.shape[2] != 3:
+                raise ValueError("4D batch_masks must be shaped [B, L, 3, C].")
+            return {
+                "event": mask[:, :, 0, :],
+                "zero": mask[:, :, 1, :],
+                "peak": mask[:, :, 2, :],
+            }
         if mask.shape[-1] == 1:
             return {"event": mask, "zero": mask, "peak": mask}
         return {
@@ -103,25 +117,48 @@ class DatasetAwareLoss(nn.Module):
         denom = self._mask_denominator(mask, pred.shape[-1])
         if denom.item() <= self.eps:
             return pred.new_tensor(0.0)
-        return (pred.abs() * mask).sum() / denom
+        zero_target = self._zero_target(pred)
+        return ((pred - zero_target).abs() * mask).sum() / denom
 
     def _peak_shape(self, pred, mask):
-        if pred.shape[1] < 3:
+        if pred.shape[1] < 2:
             return pred.new_tensor(0.0)
-        peak_mask = mask[:, 1:-1, :]
-        denom = self._mask_denominator(peak_mask, pred.shape[-1])
+        denom = self._mask_denominator(mask, pred.shape[-1])
         if denom.item() <= self.eps:
             return pred.new_tensor(0.0)
-        left = pred[:, :-2, :]
-        center = pred[:, 1:-1, :]
-        right = pred[:, 2:, :]
-        violation = F.relu(left - center) + F.relu(right - center)
-        return (violation * peak_mask).sum() / denom
+        losses = []
+        length = pred.shape[1]
+        for step in range(length):
+            start = max(0, step - self.peak_window_size)
+            end = min(length, step + self.peak_window_size + 1)
+            context_parts = []
+            if start < step:
+                context_parts.append(pred[:, start:step, :])
+            if step + 1 < end:
+                context_parts.append(pred[:, step + 1 : end, :])
+            if not context_parts:
+                continue
+            context = torch.cat(context_parts, dim=1).mean(dim=1)
+            peak = pred[:, step, :]
+            losses.append(F.relu(context - peak) * mask[:, step, :])
+        if not losses:
+            return pred.new_tensor(0.0)
+        return torch.stack(losses, dim=1).sum() / denom
 
     def _mask_denominator(self, mask, channels: int):
         if mask.shape[-1] == 1:
             return mask.sum() * channels + self.eps
         return mask.sum() + self.eps
+
+    def _zero_target(self, pred):
+        if self.zero_target is None:
+            return pred.new_zeros(1, 1, pred.shape[-1])
+        zero_target = self.zero_target.to(device=pred.device, dtype=pred.dtype)
+        if zero_target.shape[-1] != pred.shape[-1]:
+            raise ValueError(
+                f"zero_target channel count {zero_target.shape[-1]} does not match prediction channels {pred.shape[-1]}."
+            )
+        return zero_target
 
 
 def _to_mask(mask, pred):
@@ -152,4 +189,3 @@ def _flag(config: dict, key: str, default: bool) -> bool:
     if isinstance(value, str):
         return value.lower() in {"1", "true", "yes", "y"}
     return bool(value)
-

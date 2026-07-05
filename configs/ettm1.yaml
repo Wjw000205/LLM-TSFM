@@ -2,7 +2,7 @@ task_name: long_term_forecast
 is_training: 1
 model: DLinear
 data: ETTm1
-root_path: ./dataset/ETT-small/
+root_path: ./data/
 data_path: ETTm1.csv
 features: M
 target: OT
@@ -11,12 +11,19 @@ label_len: 48
 pred_len: 96
 enc_in: 7
 c_out: 7
+dlinear_init_avg: 0
 batch_size: 32
 learning_rate: 0.0001
 train_epochs: 10
+patience: 3
+early_stop_metric: total_loss
 use_zscore: 1
 use_revin: 1
-use_llm_features: 1
+use_llm_features: 0
+use_standard_time_features: 0
+use_llm_rule_features: 1
+use_oracle_features: 0
 use_dataset_aware_loss: 1
+use_rule_adapter: 0
+use_hard_intervention: 0
 llm_rule_path: ./llm_rules/example_rules/ETTm1_rules.json
-

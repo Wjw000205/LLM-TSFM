@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import pandas as pd
 
 from llm_rules.rule_parser import parse_llm_rules
-from llm_rules.rule_schema import LLMRules, RulePattern
+from llm_rules.rule_schema import RulePattern
 
 
-def generate_event_mask(timestamps, rules) -> dict[str, np.ndarray]:
+def generate_event_mask(timestamps, rules, target_columns: list[str] | None = None) -> dict[str, np.ndarray]:
     """Generate per-pattern and aggregate masks for timestamps.
 
     The LLM is not called here. This function only consumes a pre-generated
@@ -17,7 +19,8 @@ def generate_event_mask(timestamps, rules) -> dict[str, np.ndarray]:
     """
     dates = _to_datetime_index(timestamps)
     parsed = parse_llm_rules(rules)
-    zeros = np.zeros((len(dates), 1), dtype=np.float32)
+    channels = max(1, len(target_columns or []))
+    zeros = np.zeros((len(dates), channels), dtype=np.float32)
     if parsed is None:
         return {"event_mask": zeros.copy(), "zero_mask": zeros.copy(), "peak_mask": zeros.copy()}
 
@@ -27,7 +30,9 @@ def generate_event_mask(timestamps, rules) -> dict[str, np.ndarray]:
     peak_union = zeros.copy()
 
     for pattern in parsed.patterns:
-        mask = _condition_mask(dates, pattern).astype(np.float32).reshape(-1, 1)
+        base_mask = _condition_mask(dates, pattern).astype(np.float32).reshape(-1, 1)
+        channel_mask = _affected_variable_mask(pattern, target_columns)
+        mask = base_mask * channel_mask.reshape(1, -1)
         mask_dict[pattern.name] = mask
         if _is_event_pattern(pattern):
             event_union = np.maximum(event_union, mask)
@@ -48,13 +53,41 @@ def _condition_mask(dates: pd.DatetimeIndex, pattern: RulePattern) -> np.ndarray
     if kind == "calendar_periodic":
         day = int(condition.get("day", 1))
         month_interval = max(1, int(condition.get("month_interval", 1)))
-        month_ok = ((dates.month - 1) % month_interval) == 0
+        if "anchor" not in condition:
+            warnings.warn(
+                f"calendar_periodic rule '{pattern.name}' has no anchor; using first timestamp as anchor.",
+                UserWarning,
+                stacklevel=2,
+            )
+            anchor = dates[0]
+        else:
+            anchor = pd.Timestamp(condition["anchor"])
+        month_offset = (dates.year - anchor.year) * 12 + (dates.month - anchor.month)
+        month_ok = (month_offset >= 0) & ((month_offset % month_interval) == 0)
         return (dates.day == day) & month_ok
     if kind == "hourly":
         return dates.hour == int(condition.get("hour", 0))
     if kind == "weekday":
         return dates.weekday == int(condition.get("weekday", 0))
     raise ValueError(f"Unsupported rule condition kind: {kind}")
+
+
+def _affected_variable_mask(pattern: RulePattern, target_columns: list[str] | None) -> np.ndarray:
+    channels = max(1, len(target_columns or []))
+    affected = pattern.affected_variables
+    if affected == "all" or target_columns is None:
+        return np.ones(channels, dtype=np.float32)
+    mask = np.zeros(channels, dtype=np.float32)
+    for variable in affected:
+        if variable in target_columns:
+            mask[target_columns.index(variable)] = 1.0
+        else:
+            warnings.warn(
+                f"Rule '{pattern.name}' references affected variable '{variable}' not present in target columns.",
+                UserWarning,
+                stacklevel=2,
+            )
+    return mask
 
 
 def _is_event_pattern(pattern: RulePattern) -> bool:
@@ -69,4 +102,3 @@ def _to_datetime_index(timestamps) -> pd.DatetimeIndex:
     if isinstance(timestamps, pd.DatetimeIndex):
         return timestamps
     return pd.DatetimeIndex(pd.to_datetime(timestamps))
-

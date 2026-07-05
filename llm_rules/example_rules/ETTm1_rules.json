@@ -6,6 +6,7 @@
       "type": "zero_event",
       "condition": {
         "kind": "calendar_periodic",
+        "anchor": "2016-07-01 00:00:00",
         "month_interval": 2,
         "day": 1
       },
@@ -28,4 +29,3 @@
     }
   ]
 }
-

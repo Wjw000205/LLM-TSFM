@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -54,5 +55,16 @@ def loss_config_from_rules(rules: LLMRules | None) -> dict[str, float | bool]:
             elif loss_name == "peak_shape":
                 config["use_peak_shape_loss"] = True
                 config["peak_weight"] = max(float(config.get("peak_weight", 0.0)), weight)
+            elif loss_name == "diff":
+                config["use_diff_loss"] = True
+                config["diff_weight"] = max(float(config.get("diff_weight", 0.0)), weight)
+            elif loss_name == "frequency":
+                config["use_freq_loss"] = True
+                config["freq_weight"] = max(float(config.get("freq_weight", 0.0)), weight)
+            else:
+                warnings.warn(
+                    f"Unsupported loss '{loss_name}' in rule '{pattern.name}' was ignored.",
+                    UserWarning,
+                    stacklevel=2,
+                )
     return config
-

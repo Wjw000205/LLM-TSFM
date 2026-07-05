@@ -11,7 +11,11 @@ import torch
 from torch.utils.data import Dataset
 
 from data_provider.timefeatures import time_features
-from llm_rules.feature_generator import generate_llm_features
+from llm_rules.feature_generator import (
+    generate_llm_rule_features,
+    generate_oracle_features,
+    generate_standard_time_features,
+)
 from llm_rules.mask_generator import generate_event_mask
 from llm_rules.rule_parser import parse_llm_rules
 from utils.scaler import StandardScaler
@@ -37,6 +41,9 @@ class TimeSeriesDataset(Dataset):
         timeenc: int = 0,
         freq: str = "h",
         use_llm_features: bool = False,
+        use_standard_time_features: bool = False,
+        use_llm_rule_features: bool | None = None,
+        use_oracle_features: bool = False,
         llm_rule_path: str | None = None,
         scaler: StandardScaler | None = None,
     ):
@@ -52,16 +59,24 @@ class TimeSeriesDataset(Dataset):
         self.use_zscore = _flag(use_zscore)
         self.timeenc = timeenc
         self.freq = freq
-        self.use_llm_features = _flag(use_llm_features)
+        self.use_standard_time_features = _flag(use_standard_time_features)
+        if use_llm_rule_features is None:
+            self.use_llm_rule_features = _flag(use_llm_features)
+        else:
+            self.use_llm_rule_features = _flag(use_llm_rule_features)
+        self.use_oracle_features = _flag(use_oracle_features)
         self.llm_rule_path = llm_rule_path
         self.scaler = scaler
 
         self.mask_names = ["event_mask", "zero_mask", "peak_mask"]
         self.llm_feature_names: list[str] = []
         self.target_indices: list[int] = []
+        self.target_columns: list[str] = []
+        self.input_columns: list[str] = []
         self.feature_dim = 0
         self.target_dim = 0
         self.llm_feature_dim = 0
+        self.zero_target = np.zeros((0,), dtype=np.float32)
 
         self.__read_data__()
 
@@ -76,9 +91,11 @@ class TimeSeriesDataset(Dataset):
         date_col = df_raw.columns[0]
         df_raw[date_col] = pd.to_datetime(df_raw[date_col])
 
-        input_cols, target_indices = self._select_columns(df_raw, date_col)
+        input_cols, target_indices, target_columns = self._select_columns(df_raw, date_col)
         input_values = df_raw[input_cols].to_numpy(dtype=np.float32)
+        self.input_columns = input_cols
         self.target_indices = target_indices
+        self.target_columns = target_columns
         self.feature_dim = len(input_cols)
         self.target_dim = len(target_indices)
 
@@ -91,6 +108,7 @@ class TimeSeriesDataset(Dataset):
             self.scaler = self.scaler or StandardScaler().fit(np.zeros((1, self.feature_dim), dtype=np.float32))
             scaled_values = input_values
 
+        self.zero_target = self._compute_zero_target()
         border1, border2 = self._split_borders(len(df_raw), self.flag)
         dates = pd.DatetimeIndex(df_raw[date_col].iloc[border1:border2])
         data_x = scaled_values[border1:border2]
@@ -105,13 +123,7 @@ class TimeSeriesDataset(Dataset):
         self.timestamps = dates
 
         rules = parse_llm_rules(self.llm_rule_path) if self.llm_rule_path else None
-        if self.use_llm_features and rules is not None:
-            features, names = generate_llm_features(dates, rules)
-            self.llm_features = features.astype(np.float32)
-            self.llm_feature_names = names
-        else:
-            self.llm_features = np.zeros((len(dates), 0), dtype=np.float32)
-            self.llm_feature_names = []
+        self.llm_features, self.llm_feature_names = self._build_aux_features(dates, rules)
         self.llm_feature_dim = self.llm_features.shape[1]
         self.event_masks = self._build_mask_array(dates, rules)
 
@@ -154,11 +166,11 @@ class TimeSeriesDataset(Dataset):
             raise ValueError(f"target '{self.target}' not found in columns: {value_cols}")
 
         if self.features == "S":
-            return [self.target], [0]
+            return [self.target], [0], [self.target]
         if self.features == "M":
-            return value_cols, list(range(len(value_cols)))
+            return value_cols, list(range(len(value_cols))), value_cols
         if self.features == "MS":
-            return value_cols, [value_cols.index(self.target)]
+            return value_cols, [value_cols.index(self.target)], [self.target]
         raise ValueError("features must be one of 'M', 'S', or 'MS'.")
 
     def _split_borders(self, total_len: int, flag: str):
@@ -167,18 +179,24 @@ class TimeSeriesDataset(Dataset):
             train_end = 12 * 30 * 24
             val_end = train_end + 4 * 30 * 24
             test_end = val_end + 4 * 30 * 24
-            if total_len >= test_end:
-                starts = [0, train_end - self.seq_len, val_end - self.seq_len]
-                ends = [train_end, val_end, test_end]
-                return max(0, starts[flag_idx]), min(total_len, ends[flag_idx])
+            if total_len < test_end:
+                raise ValueError(
+                    f"{self.data} requires fixed 12/4/4 split, but total_len={total_len} < required={test_end}."
+                )
+            starts = [0, train_end - self.seq_len, val_end - self.seq_len]
+            ends = [train_end, val_end, test_end]
+            return max(0, starts[flag_idx]), min(total_len, ends[flag_idx])
         if self.data in self.ett_minute:
             train_end = 12 * 30 * 24 * 4
             val_end = train_end + 4 * 30 * 24 * 4
             test_end = val_end + 4 * 30 * 24 * 4
-            if total_len >= test_end:
-                starts = [0, train_end - self.seq_len, val_end - self.seq_len]
-                ends = [train_end, val_end, test_end]
-                return max(0, starts[flag_idx]), min(total_len, ends[flag_idx])
+            if total_len < test_end:
+                raise ValueError(
+                    f"{self.data} requires fixed 12/4/4 split, but total_len={total_len} < required={test_end}."
+                )
+            starts = [0, train_end - self.seq_len, val_end - self.seq_len]
+            ends = [train_end, val_end, test_end]
+            return max(0, starts[flag_idx]), min(total_len, ends[flag_idx])
 
         num_train = int(total_len * 0.7)
         num_test = int(total_len * 0.2)
@@ -189,9 +207,36 @@ class TimeSeriesDataset(Dataset):
 
     def _build_mask_array(self, dates, rules):
         if rules is None:
-            return np.zeros((len(dates), len(self.mask_names)), dtype=np.float32)
-        masks = generate_event_mask(dates, rules)
-        return np.concatenate([masks[name] for name in self.mask_names], axis=1).astype(np.float32)
+            return np.zeros((len(dates), len(self.mask_names), self.target_dim), dtype=np.float32)
+        masks = generate_event_mask(dates, rules, target_columns=self.target_columns)
+        return np.stack([masks[name] for name in self.mask_names], axis=1).astype(np.float32)
+
+    def _build_aux_features(self, dates, rules):
+        arrays: list[np.ndarray] = []
+        names: list[str] = []
+        if self.use_standard_time_features:
+            values, value_names = generate_standard_time_features(dates)
+            arrays.append(values)
+            names.extend([f"standard_time::{name}" for name in value_names])
+        if self.use_llm_rule_features and rules is not None:
+            values, value_names = generate_llm_rule_features(dates, rules, target_columns=self.target_columns)
+            if values.shape[1] > 0:
+                arrays.append(values)
+                names.extend([f"llm_rule::{name}" for name in value_names])
+        if self.use_oracle_features and rules is not None:
+            values, value_names = generate_oracle_features(dates, rules, target_columns=self.target_columns)
+            if values.shape[1] > 0:
+                arrays.append(values)
+                names.extend([f"oracle::{name}" for name in value_names])
+        if not arrays:
+            return np.zeros((len(dates), 0), dtype=np.float32), []
+        return np.concatenate(arrays, axis=1).astype(np.float32), names
+
+    def _compute_zero_target(self) -> np.ndarray:
+        if not self.use_zscore:
+            return np.zeros(self.target_dim, dtype=np.float32)
+        zeros = np.zeros((1, self.feature_dim), dtype=np.float32)
+        return self.scaler.transform(zeros)[0, self.target_indices].astype(np.float32)
 
 
 def _flag(value) -> bool:
@@ -202,4 +247,3 @@ def _flag(value) -> bool:
     if isinstance(value, str):
         return value.lower() in {"1", "true", "yes", "y"}
     return bool(value)
-

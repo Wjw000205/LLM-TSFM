@@ -22,6 +22,9 @@ def data_provider(args, flag: str):
         timeenc=getattr(args, "timeenc", 0),
         freq=getattr(args, "freq", "h"),
         use_llm_features=getattr(args, "use_llm_features", False),
+        use_standard_time_features=getattr(args, "use_standard_time_features", False),
+        use_llm_rule_features=getattr(args, "use_llm_rule_features", None),
+        use_oracle_features=getattr(args, "use_oracle_features", False),
         llm_rule_path=getattr(args, "llm_rule_path", None),
         scaler=scaler,
     )
@@ -32,9 +35,12 @@ def data_provider(args, flag: str):
         args.llm_feature_dim = dataset.llm_feature_dim
         args.target_dim = dataset.target_dim
         args.target_indices = dataset.target_indices
+        args.target_columns = dataset.target_columns
+        args.input_columns = dataset.input_columns
+        args.zero_target = dataset.zero_target.tolist()
         args.mask_names = dataset.mask_names
         args.llm_feature_names = dataset.llm_feature_names
-        args.enc_in = dataset.feature_dim + (dataset.llm_feature_dim if _flag(getattr(args, "use_llm_features", False)) else 0)
+        args.enc_in = dataset.feature_dim + dataset.llm_feature_dim
         args.c_out = dataset.target_dim
 
     batch_size = int(getattr(args, "batch_size", 32))

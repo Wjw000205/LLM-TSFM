@@ -1,22 +1,20 @@
 # LLM-Guided Dataset-Aware Time-Series Forecasting
 
-This project implements a PyTorch forecasting scaffold for:
+This repository implements a PyTorch framework for:
 
 `LLM-Guided Dataset-Aware Loss and Feature Mining for Long-Tail Time Series Forecasting`
 
-The LLM is not a forecasting model. It is assumed to run before training and produce dataset-level JSON rules. Training and inference only use normal neural forecasting models plus deterministic masks/features derived from those rules.
+This is not an LLM-as-forecaster project. The LLM does not make point-wise predictions, does not run inside model `forward`, does not run for every batch, and is not called at test-time inference. The LLM is used once before training to produce a dataset-level rule JSON from train-split evidence.
 
-## What Is Implemented
+## Core Contribution
 
-- CSV time-series dataset with chronological train/val/test splits.
-- ETT fixed split and 7:1:2 split for other datasets.
-- Train-only z-score scaling with inverse transform support.
-- RevIN layer.
-- Runnable DLinear backbone with trend/seasonal decomposition.
-- Placeholders for PatchTST, iTransformer, and TimesNet.
-- Offline LLM rule parser, event-mask generator, and auxiliary feature generator.
-- Dataset-aware loss with event-weighted MSE, zero consistency, peak shape, difference, and frequency terms.
-- Training, validation, early stopping, checkpointing, testing, and result saving.
+- Dataset-level characteristic mining.
+- Long-tail event rule extraction.
+- Rule-based feature injection from precomputed future timestamps.
+- Dataset-aware losses for event windows.
+- Event-window evaluation beyond overall MSE/MAE.
+
+The backbone is not the core contribution. DLinear is fully runnable; GRU/LSTM are lightweight alternatives; PatchTST, iTransformer, and TimesNet remain extension placeholders.
 
 ## Data Format
 
@@ -26,62 +24,178 @@ CSV files should use:
 date, feature_1, feature_2, ..., target
 ```
 
-The first column is parsed as time. The `--target` column is used for univariate or MS forecasting.
+Put datasets under `./data/`, for example:
+
+```text
+data/ETTm1.csv
+data/ETTh1.csv
+data/traffic.csv
+```
+
+ETT datasets always use the fixed 12/4/4 month split. If an ETT file is too short, the loader raises an error instead of falling back to 7:1:2. Other datasets use chronological 7:1:2 splitting. Standardization is fit on the train split only.
+
+## Rule JSON
+
+LLM rules live in `llm_rules/example_rules/`. `calendar_periodic` rules should include an `anchor`:
+
+```json
+{
+  "kind": "calendar_periodic",
+  "anchor": "2016-07-01 00:00:00",
+  "month_interval": 2,
+  "day": 1
+}
+```
+
+The anchor prevents month-periodic masks from silently assuming January as the start of the cycle.
+
+## Feature Categories
+
+The framework separates three feature families:
+
+- `--use_standard_time_features`: ordinary calendar features such as hour, weekday, day, month, first-day indicator.
+- `--use_llm_rule_features`: features directly generated from LLM rule JSON, such as event masks, peak masks, days to event, and distance to peak.
+- `--use_oracle_features`: manual/oracle rule features for ablation only.
+
+The legacy `--use_llm_features` is treated as a compatibility alias for LLM rule features.
+
+## Losses
+
+`DatasetAwareLoss` supports:
+
+- `event_weighted_mse`
+- `zero_consistency`
+- `peak_shape`
+- `diff`
+- `frequency`
+
+When z-score is enabled, zero consistency targets the scaled value of raw-space zero per target channel:
+
+```text
+zero_target = (0 - train_mean) / train_std
+```
+
+This avoids pulling predictions toward standardized-space zero.
+
+## Future Rule Use
+
+Two optional future-rule modes are available:
+
+- `--use_rule_adapter`: applies a small MLP correction using known future rule features and event masks.
+- `--use_hard_intervention`: forces deterministic zero-rule positions to the scaled zero target. This is an oracle-like intervention and should be reported separately.
+
+Neither mode calls an LLM.
 
 ## Run ETTm1
 
-Place `ETTm1.csv` at `./dataset/ETT-small/ETTm1.csv`, then run:
+Pure DLinear baseline aligned to common ETTm1 settings:
+
+```bash
+bash scripts/run_ettm1_dlinear_baseline.sh
+```
+
+This uses `seq_len=336`, `batch_size=8`, `learning_rate=0.0001`, z-score, MSE, and disables RevIN, LLM rule features, dataset-aware losses, rule adapter, and hard intervention.
+
+```bash
+python main.py \
+  --task_name long_term_forecast \
+  --is_training 1 \
+  --model DLinear \
+  --data ETTm1 \
+  --root_path ./data/ \
+  --data_path ETTm1.csv \
+  --features M \
+  --target OT \
+  --seq_len 96 \
+  --label_len 48 \
+  --pred_len 96 \
+  --batch_size 32 \
+  --learning_rate 0.0001 \
+  --train_epochs 10 \
+  --use_zscore 1 \
+  --use_revin 1 \
+  --use_llm_rule_features 1 \
+  --use_dataset_aware_loss 1 \
+  --llm_rule_path ./llm_rules/example_rules/ETTm1_rules.json
+```
+
+Or:
 
 ```bash
 bash scripts/run_ettm1.sh
 ```
 
-Equivalent config usage:
-
-```bash
-python main.py --config configs/ettm1.yaml
-```
-
 ## Run Traffic
-
-Place `traffic.csv` at `./dataset/traffic/traffic.csv`, then run:
 
 ```bash
 bash scripts/run_traffic.sh
 ```
 
-## Useful Ablations
+## Run ETTh1 Baseline
+
+Pure DLinear baseline aligned to common ETTh1 settings:
+
+```bash
+bash scripts/run_etth1_dlinear_baseline.sh
+```
+
+This uses `seq_len=336`, `batch_size=32`, `learning_rate=0.005`, z-score, MSE, and disables all non-baseline modules.
+
+## Ablations
 
 ```bash
 bash scripts/run_ablation.sh
 ```
 
-You can also toggle:
+Dataset-specific DLinear ablations:
 
-```text
---use_zscore
---use_revin
---use_llm_features
---use_dataset_aware_loss
---use_event_weighted_loss
---use_zero_consistency_loss
---use_peak_shape_loss
---use_diff_loss
---use_freq_loss
+```bash
+bash scripts/run_ettm1_dlinear_ablation.sh
+bash scripts/run_etth1_dlinear_ablation.sh
 ```
+
+The script covers:
+
+- Base + MSE
+- Base + standard time features
+- Base + LLM rule features
+- Base + LLM rule loss
+- Base + LLM rule features + LLM rule loss
+- Base + rule adapter
+- Base + hard intervention
+- Base + oracle rules
+- z-score only
+- RevIN only
+- z-score + RevIN
+
+## Train-Only LLM Mining
+
+Use `llm_miner/` to create train-only summaries and prompts:
+
+```bash
+python -m llm_miner.build_dataset_summary --root_path ./data/ --data_path ETTm1.csv --data ETTm1 --target OT --seq_len 96 --output_path llm_miner/outputs/ETTm1_summary.json
+python -m llm_miner.build_llm_prompt --summary_path llm_miner/outputs/ETTm1_summary.json --output_path llm_miner/outputs/ETTm1_prompt.txt
+```
+
+Validation and test rows must not be used for rule mining.
 
 ## Outputs
 
-Test results are saved under `results/<setting>/`:
+Test outputs are saved under `results/<setting>/`:
 
-- `metrics.npy`
-- `pred.npy`
-- `true.npy`
-- `event_metrics.json`
-- `setting.txt`
+- `pred.npy` and `true.npy`: original-scale predictions and labels.
+- `pred_normalized.npy` and `true_normalized.npy`: normalized-space predictions and labels.
+- `metrics_original_scale.json`: main paper/table metrics.
+- `metrics_normalized.json`: debugging metrics.
+- `event_metrics.json`: event-window subset of original-scale metrics.
+- `setting.txt`: run arguments.
 
-## Notes
+Paper tables should use original-scale metrics unless explicitly stated otherwise. Event-window metrics are central for evaluating long-tail behavior.
 
-- No LLM API is called in training, forward passes, or inference.
-- Rule JSON files in `llm_rules/example_rules/` are deterministic inputs.
-- DLinear is the supported runnable backbone; the other model files are extension points.
+For DLinear baseline comparison with most LTSF codebases, use `inverse=0` and read `metrics_normalized.json` or the printed `metric_space=normalized` metrics. `metrics_original_scale.json` is saved for original-unit diagnostics.
+
+## Debugging Note: Why Metrics Can Look Larger Than Baseline
+
+Do not compare a full-method run directly to pure DLinear. A run with `seq_len=96`, `use_revin=1`, `use_llm_rule_features=1`, and `use_dataset_aware_loss=1` changes the input dimension, objective, validation loss, and sometimes metric scale. Use the pure DLinear scripts first, then the ablation scripts to isolate whether degradation comes from sequence length, learning rate, RevIN, LLM rule features, or dataset-aware loss.
+
+The current ETTh1 diagnosis is recorded in `docs/experiment_conclusions.md`.
