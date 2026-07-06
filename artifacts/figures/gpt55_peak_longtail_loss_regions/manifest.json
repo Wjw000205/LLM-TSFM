@@ -1,0 +1,27 @@
+{
+  "baseline_result_dir": "results\\long_term_forecast_DLinear_ETTm1_ftM_sl336_ll48_pl96_ettm1_myfram_gpt55_peak_only_baseline_0",
+  "event_result_dir": "results\\long_term_forecast_DLinear_ETTm1_ftM_sl336_ll48_pl96_ettm1_myfram_gpt55_peak_only_finetune_generated_loss_guarded_0",
+  "gated_result_dir": null,
+  "channel": "OT",
+  "selected_windows": [
+    7188,
+    1354,
+    7236,
+    1306,
+    1402
+  ],
+  "saved_files": [
+    "artifacts\\figures\\gpt55_peak_longtail_loss_regions\\gpt55_event_window_01_7188_OT.png",
+    "artifacts\\figures\\gpt55_peak_longtail_loss_regions\\gpt55_event_window_01_7188_OT.pdf",
+    "artifacts\\figures\\gpt55_peak_longtail_loss_regions\\gpt55_event_window_02_1354_OT.png",
+    "artifacts\\figures\\gpt55_peak_longtail_loss_regions\\gpt55_event_window_02_1354_OT.pdf",
+    "artifacts\\figures\\gpt55_peak_longtail_loss_regions\\gpt55_event_window_03_7236_OT.png",
+    "artifacts\\figures\\gpt55_peak_longtail_loss_regions\\gpt55_event_window_03_7236_OT.pdf",
+    "artifacts\\figures\\gpt55_peak_longtail_loss_regions\\gpt55_event_window_04_1306_OT.png",
+    "artifacts\\figures\\gpt55_peak_longtail_loss_regions\\gpt55_event_window_04_1306_OT.pdf",
+    "artifacts\\figures\\gpt55_peak_longtail_loss_regions\\gpt55_event_window_05_1402_OT.png",
+    "artifacts\\figures\\gpt55_peak_longtail_loss_regions\\gpt55_event_window_05_1402_OT.pdf",
+    "artifacts\\figures\\gpt55_peak_longtail_loss_regions\\gpt55_event_examples_top5_OT.png",
+    "artifacts\\figures\\gpt55_peak_longtail_loss_regions\\gpt55_event_examples_top5_OT.pdf"
+  ]
+}

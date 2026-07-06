@@ -1,0 +1,50 @@
+{
+  "dataset_name": "ETTm1",
+  "analysis_scope": "llm_dataset_specific_pretraining_peak_only_diagnostic",
+  "patterns": [
+    {
+      "name": "july_ot_peak_afternoon_window",
+      "type": "peak_event",
+      "description": "OT exceeds its train-profile high-threshold in a compact afternoon peak window; encoded as a weak recurring calendar-window peak hypothesis.",
+      "condition": {
+        "kind": "calendar_window",
+        "anchor": "2016-07-07 14:30:00",
+        "center_day": 7,
+        "center_hour": 14,
+        "month_interval": 2,
+        "window_hours": 4
+      },
+      "affected_variables": [
+        "OT"
+      ],
+      "time_range": "localized_4h_window",
+      "support_count": 1,
+      "evidence_windows": [
+        [
+          "2016-07-07 13:00:00",
+          "2016-07-07 15:45:00"
+        ]
+      ],
+      "confidence": 0.3,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        },
+        "peak_shape": {
+          "enabled": true,
+          "weight": 1.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true,
+        "peak_mask": true
+      }
+    }
+  ],
+  "warnings": [
+    "Diagnostic subset of the GPT-5.5 generated rules. Zero-event hypotheses are removed because the loss-only experiments showed they are not transfer-positive on test."
+  ],
+  "confidence": 0.3
+}

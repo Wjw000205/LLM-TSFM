@@ -15,9 +15,8 @@ BATCH_SIZE=${BATCH_SIZE:-8}
 LEARNING_RATE=${LEARNING_RATE:-0.0001}
 TRAIN_EPOCHS=${TRAIN_EPOCHS:-10}
 PATIENCE=${PATIENCE:-3}
-EVENT_WEIGHT=${EVENT_WEIGHT:-20.0}
 OPENAI_BASE_URL=${OPENAI_BASE_URL:-"https://api.ruikon.com/v1"}
-OPENAI_MODEL=${OPENAI_MODEL:-"gpt-5.2"}
+OPENAI_MODEL=${OPENAI_MODEL:-"gpt-5.5"}
 OPENAI_API_KEY_ENV=${OPENAI_API_KEY_ENV:-"OPENAI_API_KEY"}
 
 for DATA in ${DATASETS}; do
@@ -76,8 +75,7 @@ for DATA in ${DATASETS}; do
   )
 
   BASELINE_DES="${LOWER}_rulegate_baseline"
-  EVENT_DES="${LOWER}_rulegate_event_w${EVENT_WEIGHT//./p}"
-  ENSEMBLE_SETTING="long_term_forecast_DLinear_${DATA}_ft${FEATURES}_sl${SEQ_LEN}_ll${LABEL_LEN}_pl${PRED_LEN}_${LOWER}_rulegate_ensemble_0"
+  EVENT_DES="${LOWER}_rulegate_generated_loss"
   BASELINE_SETTING="long_term_forecast_DLinear_${DATA}_ft${FEATURES}_sl${SEQ_LEN}_ll${LABEL_LEN}_pl${PRED_LEN}_${BASELINE_DES}_0"
   EVENT_SETTING="long_term_forecast_DLinear_${DATA}_ft${FEATURES}_sl${SEQ_LEN}_ll${LABEL_LEN}_pl${PRED_LEN}_${EVENT_DES}_0"
 
@@ -93,23 +91,14 @@ for DATA in ${DATASETS}; do
     --use_freq_loss 0 \
     --des "${BASELINE_DES}"
 
+  # Use the LLM-generated loss config from the rule JSON.
   python main.py "${COMMON_ARGS[@]}" \
-    --early_stop_metric total_loss \
+    --early_stop_metric base_mse \
+    --selection_metric guarded_event_mse \
+    --overall_mse_tolerance 0.03 \
+    --baseline_metric_path "./checkpoints/${BASELINE_SETTING}/validation_history.json" \
     --use_llm_features 0 \
-    --use_llm_rule_features 1 \
+    --use_llm_rule_features 0 \
     --use_dataset_aware_loss 1 \
-    --use_event_weighted_loss 1 \
-    --event_weight "${EVENT_WEIGHT}" \
-    --use_zero_consistency_loss 0 \
-    --zero_weight 0 \
-    --use_peak_shape_loss 0 \
-    --use_diff_loss 0 \
-    --use_freq_loss 0 \
     --des "${EVENT_DES}"
-
-  python analysis/evaluate_rule_gated_ensemble.py \
-    --baseline_result_dir "./results/${BASELINE_SETTING}" \
-    --event_result_dir "./results/${EVENT_SETTING}" \
-    --output_dir "./results/${ENSEMBLE_SETTING}" \
-    --alpha 1.0
 done

@@ -51,21 +51,40 @@ def _condition_mask(dates: pd.DatetimeIndex, pattern: RulePattern) -> np.ndarray
     condition = pattern.condition
     kind = condition.get("kind")
     if kind == "calendar_periodic":
-        day = int(condition.get("day", 1))
-        month_interval = max(1, int(condition.get("month_interval", 1)))
-        if "anchor" not in condition:
-            warnings.warn(
-                f"calendar_periodic rule '{pattern.name}' has no anchor; using first timestamp as anchor.",
-                UserWarning,
-                stacklevel=2,
-            )
-            anchor = dates[0]
-        else:
-            anchor = pd.Timestamp(condition["anchor"])
-        month_offset = (dates.year - anchor.year) * 12 + (dates.month - anchor.month)
-        month_ok = (month_offset >= 0) & ((month_offset % month_interval) == 0)
-        return (dates.day == day) & month_ok
+        period_mask = _periods_mask(dates, condition)
+        if period_mask is not None:
+            return period_mask
+        month_values = _condition_values(
+            condition,
+            exact_keys=("months", "month"),
+            high_low_keys=("high_months", "low_months"),
+            fallback_keys=("shoulder_months",),
+        )
+        hour_values = _condition_values(
+            condition,
+            exact_keys=("hours", "hour"),
+            high_low_keys=("high_hours", "low_hours"),
+        )
+        day_values = _condition_values(condition, exact_keys=("days", "day"))
+        if month_values or hour_values or day_values:
+            mask = np.ones(len(dates), dtype=bool)
+            if month_values:
+                mask &= np.isin(np.asarray(dates.month), month_values)
+            if hour_values:
+                mask &= np.isin(np.asarray(dates.hour), hour_values)
+            if day_values:
+                mask &= np.isin(np.asarray(dates.day), day_values)
+            if "month_interval" in condition or "anchor" in condition:
+                anchor = pd.Timestamp(condition.get("anchor", dates[0]))
+                month_interval = max(1, int(condition.get("month_interval", 1)))
+                month_offset = (dates.year - anchor.year) * 12 + (dates.month - anchor.month)
+                mask &= (month_offset >= 0) & ((month_offset % month_interval) == 0)
+            return mask
+        return _legacy_calendar_periodic_mask(dates, pattern)
     if kind == "calendar_window":
+        explicit = _explicit_window_mask(dates, condition)
+        if explicit is not None:
+            return explicit
         center_day = int(condition.get("center_day", condition.get("day", 1)))
         center_hour = int(condition.get("center_hour", 0))
         month_interval = max(1, int(condition.get("month_interval", 1)))
@@ -78,10 +97,129 @@ def _condition_mask(dates: pd.DatetimeIndex, pattern: RulePattern) -> np.ndarray
         )
         return month_ok & (np.abs(dates - centers) <= window)
     if kind == "hourly":
-        return dates.hour == int(condition.get("hour", 0))
+        hours = _condition_values(
+            condition,
+            exact_keys=("hours", "hour"),
+            high_low_keys=("high_hours", "low_hours"),
+        )
+        if not hours:
+            hours = [0]
+        return np.isin(np.asarray(dates.hour), hours)
     if kind == "weekday":
-        return dates.weekday == int(condition.get("weekday", 0))
+        weekdays = _condition_values(
+            condition,
+            exact_keys=("weekdays", "weekday"),
+            high_low_keys=("high_weekdays", "low_weekdays"),
+        )
+        if not weekdays:
+            weekdays = [0]
+        return np.isin(np.asarray(dates.weekday), weekdays)
     raise ValueError(f"Unsupported rule condition kind: {kind}")
+
+
+def _legacy_calendar_periodic_mask(dates: pd.DatetimeIndex, pattern: RulePattern) -> np.ndarray:
+    condition = pattern.condition
+    day = int(condition.get("day", 1))
+    month_interval = max(1, int(condition.get("month_interval", 1)))
+    if "anchor" not in condition:
+        warnings.warn(
+            f"calendar_periodic rule '{pattern.name}' has no anchor; using first timestamp as anchor.",
+            UserWarning,
+            stacklevel=2,
+        )
+        anchor = dates[0]
+    else:
+        anchor = pd.Timestamp(condition["anchor"])
+    month_offset = (dates.year - anchor.year) * 12 + (dates.month - anchor.month)
+    month_ok = (month_offset >= 0) & ((month_offset % month_interval) == 0)
+    return (dates.day == day) & month_ok
+
+
+def _periods_mask(dates: pd.DatetimeIndex, condition: dict) -> np.ndarray | None:
+    periods = condition.get("periods")
+    if not isinstance(periods, list):
+        return None
+
+    union = np.zeros(len(dates), dtype=bool)
+    for period in periods:
+        if not isinstance(period, dict):
+            continue
+        mask = np.ones(len(dates), dtype=bool)
+        constrained = False
+        month_values = _condition_values(
+            period,
+            exact_keys=("months", "month"),
+            high_low_keys=("high_months", "low_months"),
+            fallback_keys=("shoulder_months",),
+        )
+        hour_values = _condition_values(
+            period,
+            exact_keys=("hours", "hour"),
+            high_low_keys=("high_hours", "low_hours"),
+        )
+        day_values = _condition_values(period, exact_keys=("days", "day"))
+        if month_values:
+            mask &= np.isin(np.asarray(dates.month), month_values)
+            constrained = True
+        if hour_values:
+            mask &= np.isin(np.asarray(dates.hour), hour_values)
+            constrained = True
+        if day_values:
+            mask &= np.isin(np.asarray(dates.day), day_values)
+            constrained = True
+        if constrained:
+            union |= mask
+    return union
+
+
+def _explicit_window_mask(dates: pd.DatetimeIndex, condition: dict) -> np.ndarray | None:
+    windows = condition.get("windows")
+    if windows is None and ("date_start" in condition or "date_end" in condition or "start" in condition or "end" in condition):
+        windows = [
+            {
+                "start": condition.get("date_start", condition.get("start")),
+                "end": condition.get("date_end", condition.get("end")),
+            }
+        ]
+    if not windows:
+        return None
+
+    mask = np.zeros(len(dates), dtype=bool)
+    for window in windows:
+        if not isinstance(window, dict):
+            continue
+        start = window.get("start", window.get("date_start"))
+        end = window.get("end", window.get("date_end"))
+        if not start or not end:
+            continue
+        mask |= (dates >= pd.Timestamp(start)) & (dates <= pd.Timestamp(end))
+    return mask
+
+
+def _condition_values(
+    condition: dict,
+    exact_keys: tuple[str, ...],
+    high_low_keys: tuple[str, ...] = (),
+    fallback_keys: tuple[str, ...] = (),
+) -> list[int]:
+    values: list[int] = []
+    for key in exact_keys:
+        values.extend(_as_int_list(condition.get(key)))
+    if not values:
+        for key in high_low_keys:
+            values.extend(_as_int_list(condition.get(key)))
+    if not values:
+        for key in fallback_keys:
+            values.extend(_as_int_list(condition.get(key)))
+    return sorted(set(values))
+
+
+def _as_int_list(value) -> list[int]:
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple, set)):
+        return [int(item) for item in value]
+    return [int(value)]
 
 
 def _affected_variable_mask(pattern: RulePattern, target_columns: list[str] | None) -> np.ndarray:

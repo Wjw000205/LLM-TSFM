@@ -1,0 +1,6 @@
+Experiment,Rule Scope,Overall MSE,Overall MAE,Event MSE,Zero MSE,Peak MSE,Event Points,Overall Delta vs Baseline,Event Reduction vs Baseline,Notes
+longtail_loss_baseline,zero_plus_peak,0.307030797005,0.352800518274,0.385221423525,0.496520636459,0.051323799172,25344,0.000000000000,0.000000000000,pure DLinear evaluated on the earlier transferable zero+peak GPT mask
+longtail_generated_loss_guarded,zero_plus_peak,0.416539669037,0.434643507004,0.667852844855,0.874575630984,0.047684399768,25344,0.109508872032,-0.733681814763,GPT loss weights with zero+peak mask fail the overall guardrail and worsen combined event
+longtail_finetune_w1_guarded,zero_plus_peak,0.311459630728,0.355661541224,0.465916142319,0.608813764270,0.037223083804,25344,0.004428833723,-0.209480080967,baseline finetune keeps overall within 3 percent but zero hypotheses dominate combined event degradation
+peak_only_baseline,peak_only,0.307030797005,0.352800518274,0.051323799172,0.000000000000,0.051323799172,6336,0.000000000000,0.000000000000,pure DLinear evaluated only on the GPT-5.5 peak long-tail hypothesis
+peak_only_finetune_generated_loss_guarded,peak_only,0.310127019882,0.353899389505,0.025898627561,0.000000000000,0.025898627561,6336,0.003096222878,0.495368101539,loss-only baseline finetune improves peak event MSE while staying inside the 3 percent overall guardrail

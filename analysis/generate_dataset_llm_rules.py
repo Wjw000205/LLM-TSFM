@@ -14,6 +14,7 @@ import os
 import sys
 import urllib.error
 import urllib.request
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +28,15 @@ from llm_rules.rule_parser import parse_llm_rules
 
 
 SUPPORTED_CONDITION_KINDS = {"calendar_periodic", "calendar_window", "hourly", "weekday"}
+SUPPORTED_LOSS_NAMES = {"event_weighted_mse", "zero_consistency", "peak_shape", "diff", "frequency"}
+LOSS_ALIASES = {
+    "event_window_mse": "event_weighted_mse",
+    "event_masked_mse": "event_weighted_mse",
+    "event_masked_mae": "event_weighted_mse",
+    "peak_window_mse": "peak_shape",
+    "peak_window_mae": "peak_shape",
+    "zero_event_mse": "zero_consistency",
+}
 
 
 def build_dataset_profile(
@@ -106,11 +116,16 @@ def extract_json_object(content: str) -> str:
     return text[start : end + 1]
 
 
-def normalize_llm_rule_payload(payload: dict[str, Any], dataset_name: str) -> dict[str, Any]:
+def normalize_llm_rule_payload(
+    payload: dict[str, Any],
+    dataset_name: str,
+    allow_zero_consistency: bool = False,
+) -> dict[str, Any]:
     """Normalize LLM JSON into the local rule schema."""
     normalized = dict(payload)
     normalized["dataset_name"] = dataset_name
     normalized["analysis_scope"] = "llm_dataset_specific_pretraining"
+    warnings_list = list(normalized.get("warnings", []))
     patterns = []
     for idx, item in enumerate(normalized.get("patterns", [])):
         pattern = dict(item)
@@ -120,25 +135,128 @@ def normalize_llm_rule_payload(payload: dict[str, Any], dataset_name: str) -> di
         pattern.setdefault("affected_variables", "all")
         pattern.setdefault("time_range", "single_step")
 
-        features = dict(pattern.get("features", {}))
+        features = _coerce_feature_mapping(pattern.get("features", {}))
         features["event_mask"] = True
         features["days_to_event"] = True
         pattern["features"] = features
 
-        losses = dict(pattern.get("losses", {}))
+        losses = _coerce_loss_mapping(pattern.get("losses", {}))
+        if "zero_consistency" in losses and not allow_zero_consistency:
+            losses.pop("zero_consistency")
+            warnings_list.append(
+                f"Rule '{pattern['name']}' emitted zero_consistency, which is disabled for GPT-generated "
+                "loss hypotheses by default; use event_weighted_mse for near-zero long-tail supervision."
+            )
         if not losses:
             losses["event_weighted_mse"] = {"enabled": True, "weight": 5.0}
         pattern["losses"] = losses
+        _downgrade_weak_zero_recurrence(pattern, warnings_list)
 
         kind = pattern.get("condition", {}).get("kind")
         if kind not in SUPPORTED_CONDITION_KINDS:
-            warnings = list(normalized.get("warnings", []))
-            warnings.append(f"Rule '{pattern['name']}' uses unsupported condition kind '{kind}'.")
-            normalized["warnings"] = warnings
+            warnings_list.append(f"Rule '{pattern['name']}' uses unsupported condition kind '{kind}'.")
         patterns.append(pattern)
     normalized["patterns"] = patterns
+    normalized["warnings"] = warnings_list
     parse_llm_rules(normalized)
     return normalized
+
+
+def _coerce_feature_mapping(value: Any) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    if isinstance(value, str):
+        return {value: True}
+    if isinstance(value, list):
+        return {str(item): True for item in value}
+    return {}
+
+
+def _coerce_loss_mapping(value: Any) -> dict[str, dict[str, Any]]:
+    if isinstance(value, Mapping):
+        losses = {}
+        for key, payload in value.items():
+            name = _canonical_loss_name(str(key))
+            if name is not None:
+                losses[name] = _coerce_loss_payload(name, payload)
+        return losses
+    if isinstance(value, str):
+        name = _canonical_loss_name(value)
+        return {name: _default_loss_payload(name)} if name is not None else {}
+    if isinstance(value, list):
+        losses = {}
+        for item in value:
+            if isinstance(item, Mapping):
+                name = _canonical_loss_name(str(item.get("name") or item.get("loss") or item.get("type") or ""))
+                if not name:
+                    continue
+                losses[name] = _coerce_loss_payload(name, item)
+            else:
+                name = _canonical_loss_name(str(item))
+                if name is not None:
+                    losses[name] = _default_loss_payload(name)
+        return losses
+    return {}
+
+
+def _canonical_loss_name(name: str) -> str | None:
+    normalized = str(name).strip()
+    if normalized in SUPPORTED_LOSS_NAMES:
+        return normalized
+    return LOSS_ALIASES.get(normalized)
+
+
+def _coerce_loss_payload(name: str, payload: Any) -> dict[str, Any]:
+    if isinstance(payload, Mapping):
+        result = {str(key): value for key, value in payload.items() if key not in {"name", "loss", "type"}}
+    else:
+        result = {}
+    result["enabled"] = bool(result.get("enabled", True))
+    result["weight"] = float(result.get("weight", _default_loss_payload(name)["weight"]))
+    return result
+
+
+def _default_loss_payload(name: str) -> dict[str, Any]:
+    return {"enabled": True, "weight": 5.0 if name == "event_weighted_mse" else 1.0}
+
+
+def _downgrade_weak_zero_recurrence(pattern: dict[str, Any], warnings_list: list[str]) -> None:
+    """Keep one-off zero hypotheses as train-evidence windows instead of recurrence."""
+    if pattern.get("type") != "zero_event":
+        return
+    support_count = int(pattern.get("support_count", 0) or 0)
+    if support_count >= 2:
+        return
+    condition = pattern.get("condition", {})
+    if not isinstance(condition, Mapping):
+        return
+    if condition.get("kind") != "calendar_window" or "windows" in condition:
+        return
+    evidence_windows = _coerce_evidence_windows(pattern.get("evidence_windows"))
+    if not evidence_windows:
+        return
+    pattern["condition"] = {"kind": "calendar_window", "windows": evidence_windows}
+    warnings_list.append(
+        f"Rule '{pattern['name']}' is a low-support zero_event; it is kept as explicit evidence windows "
+        "instead of a recurring calendar rule."
+    )
+
+
+def _coerce_evidence_windows(value: Any) -> list[dict[str, str]]:
+    windows: list[dict[str, str]] = []
+    if not isinstance(value, list):
+        return windows
+    for item in value:
+        if isinstance(item, Mapping):
+            start = item.get("start") or item.get("date_start")
+            end = item.get("end") or item.get("date_end")
+        elif isinstance(item, (list, tuple)) and len(item) >= 2:
+            start, end = item[0], item[1]
+        else:
+            continue
+        if start and end:
+            windows.append({"start": str(start), "end": str(end)})
+    return windows
 
 
 def call_llm_rule_generator(
@@ -157,8 +275,10 @@ def call_llm_rule_generator(
             {
                 "role": "system",
                 "content": (
-                    "You generate dataset-specific time-series rule JSON. "
-                    "Use only the provided profile. Return JSON only."
+                    "You generate dataset-specific sparse long-tail event and loss-hypothesis rule JSON. "
+                    "Use only the provided profile and obey the requested schema exactly. "
+                    "Do not verify, calibrate, accept, or reject hypotheses. "
+                    "Return JSON only."
                 ),
             },
             {"role": "user", "content": _build_prompt(profile)},
@@ -302,15 +422,70 @@ def _normalize_freq(freq: str | None) -> str | None:
 
 
 def _build_prompt(profile: dict[str, Any]) -> str:
+    schema_example = {
+        "dataset_name": str(profile.get("dataset_name", "DATASET")),
+        "analysis_scope": "train_only",
+        "patterns": [
+            {
+                "name": "periodic_zero_day",
+                "type": "zero_event",
+                "description": "Values are close to zero on a recurring sparse calendar window.",
+                "condition": {"kind": "calendar_periodic", "anchor": "YYYY-MM-DD HH:MM:SS", "month_interval": 2, "day": 1},
+                "affected_variables": "all",
+                "time_range": "whole_day",
+                "support_count": 1,
+                "evidence_windows": [["YYYY-MM-DD HH:MM:SS", "YYYY-MM-DD HH:MM:SS"]],
+                "confidence": 0.8,
+                "losses": {"event_weighted_mse": {"enabled": True, "weight": 5.0}},
+                "features": {"event_mask": True, "days_to_event": True},
+            }
+        ],
+        "warnings": [],
+        "confidence": 0.8,
+    }
     return (
-        "Create rules for this dataset only. Do not reuse rules from any other dataset, "
-        "including ETTm1, unless the profile itself supports the same timestamps and "
-        "pattern. Supported condition kinds are calendar_periodic, calendar_window, "
-        "hourly, and weekday. Include event_mask and days_to_event features. Avoid "
-        "zero_consistency unless the profile shows true near-zero behavior.\n\n"
-        "Return a JSON object with dataset_name, analysis_scope, patterns, warnings, "
-        "and confidence. Each pattern must include name, type, condition, "
-        "affected_variables, time_range, losses, features, confidence, and evidence_windows.\n\n"
+        "Create sparse long-tail event and loss hypotheses for this dataset only. Do not reuse rules from any other dataset. "
+        "The output must align with the repository's legacy rule contract used by the earlier ETTm1 rules.\n\n"
+        "Hard constraints:\n"
+        "- You are a hypothesis miner, not a verifier or final judge.\n"
+        "- Use only train-profile evidence. Do not use validation or test information.\n"
+        "- Do not validate, accept, reject, calibrate, or rank hypotheses inside the LLM output.\n"
+        "- Return at most 3 patterns.\n"
+        "- Each pattern must be sparse and localized; prefer window_hours <= 4, and use <= 8 only when the evidence window is wider.\n"
+        "- Each pattern must name explicit affected_variables; do not use \"all\" unless all columns are directly present in the candidate evidence.\n"
+        "- Generate candidate loss hypotheses even when confidence is low.\n"
+        "- The trainer will consume your loss hypotheses as mask-conditioned dataset-aware losses; metrics are reported after training.\n"
+        "- Do not output deterministic priors, alpha values, oracle labels, recommended enable/disable decisions, or calibrated values.\n"
+        "- Do not output zero_consistency for GPT-generated hypotheses. It is a prior-like ablation, not the default LLM loss route.\n"
+        "- Do not return an empty patterns list when near_zero or peak candidate windows exist in the profile.\n"
+        "- Prefer timestamp-transferable templates beyond the train split only when the train evidence supports transfer.\n"
+        "- Do not invent recurring calendar rules from one-off near_zero evidence.\n"
+        "- For one-off near_zero evidence, use explicit calendar_window windows from evidence_windows so it acts as a train loss hypothesis only.\n"
+        "- Prefer the previous ETTm1-style calendar_periodic zero_event contract when there is recurring or suspected recurring near-zero/shutdown evidence.\n"
+        "- Do not encode ordinary seasonality, hour-of-day, weekday, or month regimes as events.\n"
+        "- Only create a pattern when it marks a sparse, localized, actionable event window such as near-zero shutdowns, sensor outages, maintenance-like intervals, or rare peaks.\n"
+        "- If the profile only supports normal calendar regimes and has no near_zero or peak candidate windows, return an empty patterns list and explain this in warnings.\n"
+        "- Do not put recommended, weighting, rationale, or free-form metadata inside losses or features.\n"
+        "- Put explanations in description, warnings, confidence, support_count, and evidence_windows only.\n"
+        "- losses keys must be chosen only from: event_weighted_mse, zero_consistency, peak_shape, diff, frequency.\n"
+        "- features keys must be chosen only from: event_mask, days_to_event, peak_mask, zero_event_mask, rule_confidence, support_count.\n"
+        "- Prefer event_weighted_mse only for weak hypotheses. Add zero_consistency only when labels are truly close to raw zero inside the event.\n"
+        "- For near_zero candidate windows, use type zero_event and usually enable event_weighted_mse; optionally enable zero_consistency only if the raw values are actually near zero.\n"
+        "- For peak candidate windows, use type peak_event and usually enable event_weighted_mse plus peak_shape.\n\n"
+        "Allowed condition templates:\n"
+        "- calendar_periodic: {\"kind\": \"calendar_periodic\", \"anchor\": \"YYYY-MM-DD HH:MM:SS\", \"month_interval\": 2, \"day\": 1}\n"
+        "- calendar_window: {\"kind\": \"calendar_window\", \"anchor\": \"YYYY-MM-DD HH:MM:SS\", \"center_day\": 1, \"center_hour\": 0, \"month_interval\": 2, \"window_hours\": 24}\n"
+        "- calendar_window explicit: {\"kind\": \"calendar_window\", \"windows\": [{\"start\": \"YYYY-MM-DD HH:MM:SS\", \"end\": \"YYYY-MM-DD HH:MM:SS\"}]}\n"
+        "- hourly: {\"kind\": \"hourly\", \"hour\": 13}\n"
+        "- weekday: {\"kind\": \"weekday\", \"weekday\": 6}\n"
+        "Do not use high_hours, low_hours, high_weekdays, low_weekdays, periods, calendar_field, month_sin, hour_sin, season_bucket, or calendar_target_mean.\n\n"
+        "Legacy field snippets to copy exactly when applicable:\n"
+        "- \"type\": \"zero_event\"\n"
+        "- \"condition\": {\"kind\": \"calendar_periodic\", \"anchor\": \"YYYY-MM-DD HH:MM:SS\", \"month_interval\": 2, \"day\": 1}\n"
+        "- \"losses\": {\"event_weighted_mse\": {\"enabled\": true, \"weight\": 5.0}}\n"
+        "- \"features\": {\"event_mask\": true, \"days_to_event\": true}\n\n"
+        "Return JSON only in this exact shape:\n"
+        f"{json.dumps(schema_example, indent=2)}\n\n"
         f"Dataset profile:\n{json.dumps(profile, indent=2)}"
     )
 

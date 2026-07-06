@@ -1,0 +1,77 @@
+{
+  "dataset": "ETTm1",
+  "model": "DLinear",
+  "llm_model": "gpt-5.5",
+  "main_contract": "LLM mines sparse long-tail event hypotheses and loss hypotheses; training consumes them as dataset-aware losses. LLM output is not used as a verifier, calibrated prior, oracle, or inference-time prediction gate.",
+  "guardrail": {
+    "selection_metric": "guarded_event_mse",
+    "overall_mse_tolerance": 0.03,
+    "baseline_overall_mse": 0.3070307970046997
+  },
+  "experiments": [
+    {
+      "experiment": "longtail_loss_baseline",
+      "rule_scope": "zero_plus_peak",
+      "overall_mse": 0.3070307970046997,
+      "overall_mae": 0.35280051827430725,
+      "event_mse": 0.3852214235246468,
+      "zero_mse": 0.49652063645872974,
+      "peak_mse": 0.051323799171752074,
+      "event_points": 25344,
+      "notes": "Pure DLinear evaluated on the earlier transferable zero+peak GPT mask."
+    },
+    {
+      "experiment": "longtail_generated_loss_guarded",
+      "rule_scope": "zero_plus_peak",
+      "overall_mse": 0.41653966903686523,
+      "overall_mae": 0.4346435070037842,
+      "event_mse": 0.6678528448545344,
+      "zero_mse": 0.8745756309838623,
+      "peak_mse": 0.04768439976848436,
+      "event_points": 25344,
+      "notes": "Raw GPT loss weights with the zero+peak mask fail the overall guardrail and worsen combined event."
+    },
+    {
+      "experiment": "longtail_finetune_w1_guarded",
+      "rule_scope": "zero_plus_peak",
+      "overall_mse": 0.31145963072776794,
+      "overall_mae": 0.355661541223526,
+      "event_mse": 0.46591614231900413,
+      "zero_mse": 0.6088137642699869,
+      "peak_mse": 0.037223083804293365,
+      "event_points": 25344,
+      "notes": "Low-LR baseline finetune keeps overall inside 3 percent but zero hypotheses dominate combined event degradation."
+    },
+    {
+      "experiment": "peak_only_baseline",
+      "rule_scope": "peak_only",
+      "overall_mse": 0.3070307970046997,
+      "overall_mae": 0.35280051827430725,
+      "event_mse": 0.051323799171752074,
+      "zero_mse": 0.0,
+      "peak_mse": 0.051323799171752074,
+      "event_points": 6336,
+      "notes": "Pure DLinear evaluated only on the GPT-5.5 peak long-tail hypothesis."
+    },
+    {
+      "experiment": "peak_only_finetune_generated_loss_guarded",
+      "rule_scope": "peak_only",
+      "overall_mse": 0.31012701988220215,
+      "overall_mae": 0.35389938950538635,
+      "event_mse": 0.025898627560507235,
+      "zero_mse": 0.0,
+      "peak_mse": 0.025898627560507235,
+      "event_points": 6336,
+      "notes": "Loss-only baseline finetune improves peak event MSE by 49.5 percent while staying inside the 3 percent overall guardrail."
+    }
+  ],
+  "conclusion": [
+    "The corrected GPT-5.5 prompt and normalizer keep LLM output in the intended role: sparse long-tail loss hypotheses, not rule validation or deterministic priors.",
+    "Zero-event timestamp hypotheses are not transfer-positive on ETTm1; even without zero_consistency, they worsen combined event MSE.",
+    "The GPT-5.5 peak long-tail hypothesis is transfer-positive under loss-only low-learning-rate finetuning: event/peak MSE improves from 0.051324 to 0.025899 while overall MSE remains within the 3 percent guardrail.",
+    "The current main ETTm1 rule file keeps one-off zero evidence as explicit train windows so it will not create false-positive test zero events."
+  ],
+  "figures": {
+    "peak_longtail_loss_regions": "artifacts/figures/gpt55_peak_longtail_loss_regions/manifest.json"
+  }
+}

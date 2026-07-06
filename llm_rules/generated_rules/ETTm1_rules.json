@@ -1,0 +1,136 @@
+{
+  "dataset_name": "ETTm1",
+  "analysis_scope": "llm_dataset_specific_pretraining",
+  "patterns": [
+    {
+      "name": "dec05_multi_channel_zero_window",
+      "type": "zero_event",
+      "description": "HUFL, LUFL, and LULL show a localized block of raw zero values during a sparse train-only window, consistent with a short sensor outage or maintenance-like interval.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-12-05 08:15:00",
+            "end": "2016-12-05 11:00:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "HUFL",
+        "LUFL",
+        "LULL"
+      ],
+      "time_range": "explicit_window",
+      "support_count": 1,
+      "evidence_windows": [
+        [
+          "2016-12-05 08:15:00",
+          "2016-12-05 11:00:00"
+        ]
+      ],
+      "confidence": 0.6,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true,
+        "zero_event_mask": true
+      }
+    },
+    {
+      "name": "dec06_ot_zero_blocks",
+      "type": "zero_event",
+      "description": "OT has sparse train-only raw zero readings in two short localized blocks on the same date, suggesting a possible one-off measurement interruption.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-12-06 00:15:00",
+            "end": "2016-12-06 01:45:00"
+          },
+          {
+            "start": "2016-12-06 10:15:00",
+            "end": "2016-12-06 11:45:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "OT"
+      ],
+      "time_range": "explicit_windows",
+      "support_count": 2,
+      "evidence_windows": [
+        [
+          "2016-12-06 00:15:00",
+          "2016-12-06 01:45:00"
+        ],
+        [
+          "2016-12-06 10:15:00",
+          "2016-12-06 11:45:00"
+        ]
+      ],
+      "confidence": 0.45,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true,
+        "zero_event_mask": true
+      }
+    },
+    {
+      "name": "jul07_ot_peak_window",
+      "type": "peak_event",
+      "description": "OT has a localized high-value peak sequence above its train high-threshold during a short afternoon window.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-07-07 13:00:00",
+            "end": "2016-07-07 15:45:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "OT"
+      ],
+      "time_range": "explicit_window",
+      "support_count": 1,
+      "evidence_windows": [
+        [
+          "2016-07-07 13:00:00",
+          "2016-07-07 15:45:00"
+        ]
+      ],
+      "confidence": 0.5,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        },
+        "peak_shape": {
+          "enabled": true,
+          "weight": 1.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true,
+        "peak_mask": true
+      }
+    }
+  ],
+  "warnings": [
+    "Patterns are hypothesis candidates mined from train-profile candidate windows only; they are not validated, calibrated, ranked, accepted, or rejected.",
+    "Near-zero evidence appears one-off in the provided train profile, so explicit calendar_window conditions are used instead of transferable recurring calendar rules."
+  ],
+  "confidence": 0.52
+}
