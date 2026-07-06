@@ -1,0 +1,50 @@
+{
+  "dataset_name": "ETTh1",
+  "analysis_scope": "gpt55_peak_transfer_diagnostic",
+  "patterns": [
+    {
+      "name": "jul07_ot_peak_burst_transfer",
+      "type": "peak_event",
+      "description": "Transfer diagnostic derived from the ETTh1 GPT-5.5 peak hypothesis `jul07_ot_peak_burst`; zero hypotheses are intentionally excluded.",
+      "condition": {
+        "kind": "calendar_window",
+        "anchor": "2016-07-07 14:00:00",
+        "center_day": 7,
+        "center_hour": 14,
+        "month_interval": 2,
+        "window_hours": 2
+      },
+      "affected_variables": [
+        "OT"
+      ],
+      "time_range": "localized_peak_transfer_window",
+      "support_count": 4,
+      "evidence_windows": [
+        [
+          "2016-07-07 13:00:00",
+          "2016-07-07 16:00:00"
+        ]
+      ],
+      "confidence": 0.48,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        },
+        "peak_shape": {
+          "enabled": true,
+          "weight": 1.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "peak_mask": true,
+        "days_to_event": true
+      }
+    }
+  ],
+  "warnings": [
+    "Diagnostic transfer rule derived from ETTh1-specific GPT-5.5 analysis. This is not reused from ETTm1 and does not include zero-event hypotheses."
+  ],
+  "confidence": 0.48
+}

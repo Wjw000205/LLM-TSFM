@@ -1,0 +1,142 @@
+{
+  "dataset_name": "ETTh1",
+  "analysis_scope": "llm_dataset_specific_pretraining",
+  "patterns": [
+    {
+      "name": "dec05_multi_sensor_zero_outage",
+      "type": "zero_event",
+      "description": "Multiple load-related variables are exactly zero during a sparse one-off train-window interval, consistent with a localized outage or maintenance-like event hypothesis.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-12-05 09:00:00",
+            "end": "2016-12-05 12:00:00"
+          },
+          {
+            "start": "2016-12-05 13:00:00",
+            "end": "2016-12-05 16:00:00"
+          },
+          {
+            "start": "2016-12-05 17:00:00",
+            "end": "2016-12-05 20:00:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "HUFL",
+        "LUFL",
+        "LULL"
+      ],
+      "time_range": "explicit_windows",
+      "support_count": 12,
+      "evidence_windows": [
+        [
+          "2016-12-05 09:00:00",
+          "2016-12-05 20:00:00"
+        ]
+      ],
+      "confidence": 0.65,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "zero_event_mask": true,
+        "rule_confidence": true,
+        "support_count": true,
+        "days_to_event": true
+      }
+    },
+    {
+      "name": "dec06_ot_zero_cluster",
+      "type": "zero_event",
+      "description": "The OT target has an exactly zero sparse cluster within the train split, suggesting a localized zero-value event hypothesis rather than an ordinary calendar regime.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-12-06 12:00:00",
+            "end": "2016-12-06 16:00:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "OT"
+      ],
+      "time_range": "explicit_windows",
+      "support_count": 5,
+      "evidence_windows": [
+        [
+          "2016-12-06 12:00:00",
+          "2016-12-06 16:00:00"
+        ]
+      ],
+      "confidence": 0.52,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "zero_event_mask": true,
+        "rule_confidence": true,
+        "support_count": true,
+        "days_to_event": true
+      }
+    },
+    {
+      "name": "jul07_ot_peak_burst",
+      "type": "peak_event",
+      "description": "The OT target exceeds its high-threshold over a short contiguous train-window burst, forming a sparse localized peak-event hypothesis.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-07-07 13:00:00",
+            "end": "2016-07-07 16:00:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "OT"
+      ],
+      "time_range": "explicit_windows",
+      "support_count": 4,
+      "evidence_windows": [
+        [
+          "2016-07-07 13:00:00",
+          "2016-07-07 16:00:00"
+        ]
+      ],
+      "confidence": 0.48,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        },
+        "peak_shape": {
+          "enabled": true,
+          "weight": 1.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "peak_mask": true,
+        "rule_confidence": true,
+        "support_count": true,
+        "days_to_event": true
+      }
+    }
+  ],
+  "warnings": [
+    "Patterns are candidate train-only loss hypotheses from sparse near-zero and peak windows; they are not verified, calibrated, ranked, or accepted as final events.",
+    "One-off near-zero evidence is encoded with explicit calendar_window intervals only, avoiding invented recurring calendar rules."
+  ],
+  "confidence": 0.55
+}

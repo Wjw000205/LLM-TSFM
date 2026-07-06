@@ -29,3 +29,15 @@ Figures:
 
 - `artifacts/figures/gpt55_peak_longtail_loss_regions/manifest.json`
 - `artifacts/figures/gpt55_peak_longtail_loss_regions/gpt55_event_examples_top5_OT.png`
+
+## Multidataset Check
+
+The same direction was checked on ETTh1, ETTh2, and ETTm2 with dataset-specific GPT-5.5 peak hypotheses. The gated variant preserves the baseline outside event masks and applies the loss expert only inside event masks.
+
+| Dataset | Baseline Overall MSE | Gated Overall MSE | Baseline Event MSE | Gated Event MSE | Event Reduction |
+|---|---:|---:|---:|---:|---:|
+| ETTh1 | 0.383827 | 0.383802 | 0.136563 | 0.088367 | 35.29% |
+| ETTh2 | 0.292610 | 0.292602 | 0.101615 | 0.097232 | 4.31% |
+| ETTm2 | 0.170001 | 0.169998 | 0.025562 | 0.018821 | 26.37% |
+
+Full report: `docs/multidataset_gpt55_peak_transfer_results.md`.

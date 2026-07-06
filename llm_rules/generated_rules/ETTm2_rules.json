@@ -1,0 +1,125 @@
+{
+  "dataset_name": "ETTm2",
+  "analysis_scope": "llm_dataset_specific_pretraining",
+  "patterns": [
+    {
+      "name": "hufl_december_zero_outage_window",
+      "type": "zero_event",
+      "description": "HUFL has a localized train-split interval with consecutive raw zero values, consistent with a sparse sensor outage or shutdown-like window.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-12-18 08:00:00",
+            "end": "2016-12-18 10:45:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "HUFL"
+      ],
+      "time_range": "localized_window",
+      "support_count": 1,
+      "evidence_windows": [
+        [
+          "2016-12-18 08:00:00",
+          "2016-12-18 10:45:00"
+        ]
+      ],
+      "confidence": 0.55,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true
+      }
+    },
+    {
+      "name": "hull_mull_july_shared_zero_window",
+      "type": "zero_event",
+      "description": "HULL and MULL both show raw zero values over the same short localized train-split window, suggesting a sparse shared low-load or sensor-zero event.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-07-30 21:30:00",
+            "end": "2016-07-30 22:00:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "HULL",
+        "MULL"
+      ],
+      "time_range": "localized_window",
+      "support_count": 1,
+      "evidence_windows": [
+        [
+          "2016-07-30 21:30:00",
+          "2016-07-30 22:00:00"
+        ]
+      ],
+      "confidence": 0.45,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true
+      }
+    },
+    {
+      "name": "ot_july_short_peak_window",
+      "type": "peak_event",
+      "description": "OT has a short localized train-split peak cluster above its high-threshold evidence values, forming a sparse high-temperature peak window.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-07-07 13:45:00",
+            "end": "2016-07-07 16:30:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "OT"
+      ],
+      "time_range": "localized_window",
+      "support_count": 1,
+      "evidence_windows": [
+        [
+          "2016-07-07 13:45:00",
+          "2016-07-07 16:30:00"
+        ]
+      ],
+      "confidence": 0.5,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        },
+        "peak_shape": {
+          "enabled": true,
+          "weight": 1.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "peak_mask": true,
+        "days_to_event": true
+      }
+    }
+  ],
+  "warnings": [
+    "Patterns are train-only hypotheses from candidate near-zero or peak windows and are not validated or calibrated here.",
+    "One-off near-zero evidence is encoded as explicit calendar_window conditions rather than recurring calendar rules."
+  ],
+  "confidence": 0.5
+}

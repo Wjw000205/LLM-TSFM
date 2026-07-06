@@ -1,0 +1,99 @@
+{
+  "summary": [
+    {
+      "Dataset": "ETTh1",
+      "Rule Source": "dataset-specific GPT-5.5 peak hypothesis",
+      "Baseline Overall MSE": 0.3838268518447876,
+      "Loss Expert Overall MSE": 0.3765048384666443,
+      "Gated Overall MSE": 0.3838021159172058,
+      "Baseline Event MSE": 0.13656276066955728,
+      "Loss Expert Event MSE": 0.08836722373870354,
+      "Gated Event MSE": 0.08836722373870354,
+      "Event Points": 960,
+      "Overall Delta vs Baseline": -2.473592758178711e-05,
+      "Event Reduction vs Baseline": 0.3529185899183242,
+      "Peak MSE Baseline": 0.13656276066955728,
+      "Peak MSE Gated": 0.08836722373870354,
+      "Rule Path": "llm_rules/generated_rules/ETTh1_peak_transfer_rules.json",
+      "Base GPT Rule Path": "llm_rules/generated_rules/ETTh1_rules.json",
+      "Generation Report": "artifacts/core_results/etth1_llm_rule_generation_report.json",
+      "Baseline Result Dir": "results/long_term_forecast_DLinear_ETTh1_ftM_sl336_ll48_pl96_etth1_gpt55_peak_transfer_baseline_0",
+      "Loss Expert Result Dir": "results/long_term_forecast_DLinear_ETTh1_ftM_sl336_ll48_pl96_etth1_gpt55_peak_transfer_finetune_loss_0",
+      "Gated Result Dir": "results/long_term_forecast_DLinear_ETTh1_ftM_sl336_ll48_pl96_etth1_gpt55_peak_transfer_gated_alpha_1p0_0",
+      "Notes": "Gated prediction uses baseline outside event mask and loss expert inside event mask; zero hypotheses excluded."
+    },
+    {
+      "Dataset": "ETTh2",
+      "Rule Source": "dataset-specific GPT-5.5 peak hypothesis",
+      "Baseline Overall MSE": 0.29261037707328796,
+      "Loss Expert Overall MSE": 0.28848031163215637,
+      "Gated Overall MSE": 0.2926023006439209,
+      "Baseline Event MSE": 0.101615066881239,
+      "Loss Expert Event MSE": 0.0972318296076469,
+      "Gated Event MSE": 0.0972318296076469,
+      "Event Points": 3456,
+      "Overall Delta vs Baseline": -8.07642936706543e-06,
+      "Event Reduction vs Baseline": 0.04313570229417794,
+      "Peak MSE Baseline": 0.101615066881239,
+      "Peak MSE Gated": 0.0972318296076469,
+      "Rule Path": "llm_rules/generated_rules/ETTh2_peak_transfer_rules.json",
+      "Base GPT Rule Path": "llm_rules/generated_rules/ETTh2_rules.json",
+      "Generation Report": "artifacts/core_results/etth2_llm_rule_generation_report.json",
+      "Baseline Result Dir": "results/long_term_forecast_DLinear_ETTh2_ftM_sl336_ll48_pl96_etth2_gpt55_peak_transfer_baseline_0",
+      "Loss Expert Result Dir": "results/long_term_forecast_DLinear_ETTh2_ftM_sl336_ll48_pl96_etth2_gpt55_peak_transfer_finetune_loss_0",
+      "Gated Result Dir": "results/long_term_forecast_DLinear_ETTh2_ftM_sl336_ll48_pl96_etth2_gpt55_peak_transfer_gated_alpha_1p0_0",
+      "Notes": "Gated prediction uses baseline outside event mask and loss expert inside event mask; zero hypotheses excluded."
+    },
+    {
+      "Dataset": "ETTm2",
+      "Rule Source": "dataset-specific GPT-5.5 peak hypothesis",
+      "Baseline Overall MSE": 0.1700010895729065,
+      "Loss Expert Overall MSE": 0.1727980524301529,
+      "Gated Overall MSE": 0.16999822854995728,
+      "Baseline Event MSE": 0.02556241493591256,
+      "Loss Expert Event MSE": 0.018820838600923807,
+      "Gated Event MSE": 0.018820838600923807,
+      "Event Points": 3264,
+      "Overall Delta vs Baseline": -2.86102294921875e-06,
+      "Event Reduction vs Baseline": 0.2637300251909116,
+      "Peak MSE Baseline": 0.02556241493591256,
+      "Peak MSE Gated": 0.018820838600923807,
+      "Rule Path": "llm_rules/generated_rules/ETTm2_peak_transfer_rules.json",
+      "Base GPT Rule Path": "llm_rules/generated_rules/ETTm2_rules.json",
+      "Generation Report": "artifacts/core_results/ettm2_llm_rule_generation_report.json",
+      "Baseline Result Dir": "results/long_term_forecast_DLinear_ETTm2_ftM_sl336_ll48_pl96_ettm2_gpt55_peak_transfer_baseline_0",
+      "Loss Expert Result Dir": "results/long_term_forecast_DLinear_ETTm2_ftM_sl336_ll48_pl96_ettm2_gpt55_peak_transfer_finetune_loss_0",
+      "Gated Result Dir": "results/long_term_forecast_DLinear_ETTm2_ftM_sl336_ll48_pl96_ettm2_gpt55_peak_transfer_gated_alpha_1p0_0",
+      "Notes": "Gated prediction uses baseline outside event mask and loss expert inside event mask; zero hypotheses excluded."
+    }
+  ],
+  "checks": [
+    {
+      "Dataset": "ETTh1",
+      "Baseline Overall MSE": 0.3838268518447876,
+      "Gated Overall MSE": 0.3838021159172058,
+      "Baseline Event MSE": 0.13656276066955728,
+      "Gated Event MSE": 0.08836722373870354,
+      "Overall Preserved": true,
+      "Event Improved": true
+    },
+    {
+      "Dataset": "ETTh2",
+      "Baseline Overall MSE": 0.29261037707328796,
+      "Gated Overall MSE": 0.2926023006439209,
+      "Baseline Event MSE": 0.101615066881239,
+      "Gated Event MSE": 0.0972318296076469,
+      "Overall Preserved": true,
+      "Event Improved": true
+    },
+    {
+      "Dataset": "ETTm2",
+      "Baseline Overall MSE": 0.1700010895729065,
+      "Gated Overall MSE": 0.16999822854995728,
+      "Baseline Event MSE": 0.02556241493591256,
+      "Gated Event MSE": 0.018820838600923807,
+      "Overall Preserved": true,
+      "Event Improved": true
+    }
+  ]
+}
