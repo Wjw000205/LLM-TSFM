@@ -1,28 +1,112 @@
 {
   "dataset_name": "ETTh1",
-  "analysis_scope": "gpt55_peak_transfer_diagnostic",
+  "analysis_scope": "llm_dataset_specific_pretraining",
   "patterns": [
     {
-      "name": "jul07_ot_peak_burst_transfer",
-      "type": "peak_event",
-      "description": "Transfer diagnostic derived from the ETTh1 GPT-5.5 peak hypothesis `jul07_ot_peak_burst`; zero hypotheses are intentionally excluded.",
+      "name": "dec05_multivariable_zero_window",
+      "type": "zero_event",
+      "description": "Multiple load-related variables are exactly zero in a short localized training window on 2016-12-05.",
       "condition": {
         "kind": "calendar_window",
-        "anchor": "2016-07-07 14:00:00",
-        "center_day": 7,
-        "center_hour": 14,
-        "month_interval": 2,
-        "window_hours": 2
+        "windows": [
+          {
+            "start": "2016-12-05 09:00:00",
+            "end": "2016-12-05 11:00:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "HUFL",
+        "MUFL",
+        "LUFL",
+        "LULL"
+      ],
+      "time_range": "explicit_window",
+      "support_count": 1,
+      "evidence_windows": [
+        [
+          "2016-12-05 09:00:00",
+          "2016-12-05 11:00:00"
+        ]
+      ],
+      "confidence": 0.62,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true
+      }
+    },
+    {
+      "name": "dec06_ot_zero_window",
+      "type": "zero_event",
+      "description": "OT is exactly zero across a localized training-only afternoon window on 2016-12-06.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-12-06 12:00:00",
+            "end": "2016-12-06 16:00:00"
+          }
+        ]
       },
       "affected_variables": [
         "OT"
       ],
-      "time_range": "localized_peak_transfer_window",
-      "support_count": 4,
+      "time_range": "explicit_window",
+      "support_count": 1,
+      "evidence_windows": [
+        [
+          "2016-12-06 12:00:00",
+          "2016-12-06 16:00:00"
+        ]
+      ],
+      "confidence": 0.52,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true
+      }
+    },
+    {
+      "name": "july_ot_peak_windows",
+      "type": "peak_event",
+      "description": "OT exceeds the high-threshold peak candidate level in two localized July training windows.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-07-07 13:00:00",
+            "end": "2016-07-07 16:00:00"
+          },
+          {
+            "start": "2016-07-12 09:00:00",
+            "end": "2016-07-12 16:00:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "OT"
+      ],
+      "time_range": "explicit_window",
+      "support_count": 2,
       "evidence_windows": [
         [
           "2016-07-07 13:00:00",
           "2016-07-07 16:00:00"
+        ],
+        [
+          "2016-07-12 09:00:00",
+          "2016-07-12 16:00:00"
         ]
       ],
       "confidence": 0.48,
@@ -44,7 +128,8 @@
     }
   ],
   "warnings": [
-    "Diagnostic transfer rule derived from ETTh1-specific GPT-5.5 analysis. This is not reused from ETTm1 and does not include zero-event hypotheses."
+    "Rules are sparse train-only loss hypotheses mined from candidate near-zero and peak windows.",
+    "One-off near-zero evidence is encoded as explicit calendar_window windows rather than recurring calendar rules."
   ],
-  "confidence": 0.48
+  "confidence": 0.54
 }

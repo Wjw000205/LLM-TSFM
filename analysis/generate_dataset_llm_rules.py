@@ -90,6 +90,7 @@ def build_dataset_profile(
             "seq_len": int(seq_len),
             "pred_len": int(pred_len),
         },
+        "event_rule_contract": "Event timestamp locations must not depend on pred_len.",
         "time": {
             "date_column": date_col,
             "start": str(dates.iloc[0]),
@@ -454,7 +455,7 @@ def _build_prompt(profile: dict[str, Any]) -> str:
         "Hard constraints:\n"
         "- You are a hypothesis miner, not a verifier or final judge.\n"
         "- Use only train-profile evidence. Do not use validation or test information.\n"
-        "- Treat forecast_horizon.pred_len as part of the experiment configuration; do not assume one horizon's rule config is valid for another horizon.\n"
+        "- Treat forecast_horizon.pred_len only as downstream sliding-window context; it must not change event timestamp locations, mask conditions, anchors, or date windows.\n"
         "- Do not validate, accept, reject, calibrate, or rank hypotheses inside the LLM output.\n"
         "- Return at most 3 patterns.\n"
         "- Each pattern must be sparse and localized; prefer window_hours <= 4, and use <= 8 only when the evidence window is wider.\n"

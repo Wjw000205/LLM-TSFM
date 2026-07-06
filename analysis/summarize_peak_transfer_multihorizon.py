@@ -63,6 +63,7 @@ CSV_FIELDS = [
     "overall_mse_tolerance",
     "learning_rate",
     "status",
+    "event_mask_warning",
     "event_points",
     "total_prediction_elements",
     "event_ratio",
@@ -113,15 +114,27 @@ def _summarize_one(run: dict[str, Any]) -> dict[str, Any]:
     baseline_overall = float(baseline_metrics["mse"])
     expert_overall = float(expert_metrics["mse"])
     gated_overall = float(gated_metrics["mse"])
-    baseline_event = float(baseline_metrics["event_window_mse"])
-    expert_event = float(expert_metrics["event_window_mse"])
-    gated_event = float(gated_metrics["event_window_mse"])
+    baseline_event = _metric_float(baseline_metrics, "event_window_mse")
+    expert_event = _metric_float(expert_metrics, "event_window_mse")
+    gated_event = _metric_float(gated_metrics, "event_window_mse")
+    event_mask_warning = ""
+    if event_points == 0:
+        baseline_event = float("nan")
+        expert_event = float("nan")
+        gated_event = float("nan")
+        event_mask_warning = "empty_event_mask"
     observed_delta = gated_overall - baseline_overall
     expected_delta = event_ratio * (gated_event - baseline_event)
     non_event_delta = gated_non_event_mse - baseline_non_event_mse
 
     selected_reason = expert_config.get("selected_reason")
-    status = "guarded" if selected_reason == "guarded_event_mse" else str(selected_reason or "unknown")
+    status = (
+        "not_applicable_empty_mask"
+        if event_points == 0
+        else "guarded"
+        if selected_reason == "guarded_event_mse"
+        else str(selected_reason or "unknown")
+    )
     return {
         "pred_len": int(run["pred_len"]),
         "baseline_overall_mse": baseline_overall,
@@ -141,6 +154,7 @@ def _summarize_one(run: dict[str, Any]) -> dict[str, Any]:
         "overall_mse_tolerance": expert_config.get("overall_mse_tolerance"),
         "learning_rate": expert_config.get("learning_rate"),
         "status": status,
+        "event_mask_warning": event_mask_warning,
         "event_points": event_points,
         "total_prediction_elements": total_elements,
         "event_ratio": event_ratio,
@@ -164,9 +178,16 @@ def _read_json(path: Path) -> dict[str, Any]:
 def _masked_mse(pred: np.ndarray, true: np.ndarray, mask: np.ndarray) -> float:
     denom = int(mask.sum())
     if denom == 0:
-        return 0.0
+        return float("nan")
     diff = np.asarray(pred - true)
     return float(np.square(diff)[mask].mean())
+
+
+def _metric_float(metrics: dict[str, Any], key: str) -> float:
+    value = metrics.get(key)
+    if value is None:
+        return float("nan")
+    return float(value)
 
 
 def _effective_value(config: dict[str, Any], loss: dict[str, Any], key: str):

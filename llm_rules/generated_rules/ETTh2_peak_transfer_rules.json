@@ -1,33 +1,104 @@
 {
   "dataset_name": "ETTh2",
-  "analysis_scope": "gpt55_peak_transfer_diagnostic",
+  "analysis_scope": "llm_dataset_specific_pretraining",
   "patterns": [
     {
-      "name": "ot_july_local_peak_clusters_transfer",
-      "type": "peak_event",
-      "description": "Transfer diagnostic derived from the ETTh2 GPT-5.5 peak hypothesis `ot_july_local_peak_clusters`; zero hypotheses are intentionally excluded.",
+      "name": "hufl_zero_shutdown_dec18",
+      "type": "zero_event",
+      "description": "HUFL is exactly zero across a sparse localized train-window segment, consistent with a candidate shutdown or sensor outage hypothesis.",
       "condition": {
-        "kind": "calendar_periodic",
-        "anchor": "2016-07-07 14:00:00",
-        "month_interval": 2,
-        "days": [
-          7,
-          8,
-          12
-        ],
-        "hours": [
-          12,
-          13,
-          14,
-          15,
-          16,
-          17
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-12-18 08:00:00",
+            "end": "2016-12-18 18:00:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "HUFL"
+      ],
+      "time_range": "explicit_window",
+      "support_count": 11,
+      "evidence_windows": [
+        [
+          "2016-12-18 08:00:00",
+          "2016-12-18 18:00:00"
+        ]
+      ],
+      "confidence": 0.55,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true
+      }
+    },
+    {
+      "name": "hull_zero_shutdown_aug10",
+      "type": "zero_event",
+      "description": "HULL is exactly zero across a sparse localized train-window segment, consistent with a candidate shutdown or sensor outage hypothesis.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-08-10 15:00:00",
+            "end": "2016-08-11 01:00:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "HULL"
+      ],
+      "time_range": "explicit_window",
+      "support_count": 11,
+      "evidence_windows": [
+        [
+          "2016-08-10 15:00:00",
+          "2016-08-11 01:00:00"
+        ]
+      ],
+      "confidence": 0.5,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true
+      }
+    },
+    {
+      "name": "ot_july_peak_bursts",
+      "type": "peak_event",
+      "description": "OT exceeds its high-threshold in sparse localized afternoon train-window bursts, consistent with a candidate rare peak-shape hypothesis.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-07-07 14:00:00",
+            "end": "2016-07-07 16:00:00"
+          },
+          {
+            "start": "2016-07-08 14:00:00",
+            "end": "2016-07-08 17:00:00"
+          },
+          {
+            "start": "2016-07-12 12:00:00",
+            "end": "2016-07-12 16:00:00"
+          }
         ]
       },
       "affected_variables": [
         "OT"
       ],
-      "time_range": "localized_peak_transfer_windows",
+      "time_range": "explicit_window",
       "support_count": 12,
       "evidence_windows": [
         [
@@ -57,12 +128,14 @@
       "features": {
         "event_mask": true,
         "peak_mask": true,
+        "support_count": true,
         "days_to_event": true
       }
     }
   ],
   "warnings": [
-    "Diagnostic transfer rule derived from ETTh2-specific GPT-5.5 analysis. This is not reused from ETTm1 and does not include zero-event hypotheses."
+    "Patterns are train-only candidate hypotheses from sparse near-zero and peak evidence windows; they are not verified, ranked, calibrated, accepted, or rejected.",
+    "One-off near-zero evidence is encoded only as explicit calendar_window conditions rather than transferable recurring calendar rules."
   ],
-  "confidence": 0.45
+  "confidence": 0.5
 }

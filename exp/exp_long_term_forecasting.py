@@ -594,12 +594,14 @@ class GuardedCheckpointSelector:
         if self.selection_metric == "total_loss":
             return (total_loss,), "total_loss"
         if self.selection_metric == "event_mse":
+            if not np.isfinite(event_mse):
+                return None
             return (event_mse,), "event_mse"
         if self.selection_metric in {"guarded_event_mse", "pareto"}:
             if self.baseline_mse is None:
                 return (base_mse,), "fallback_base_mse_missing_baseline"
             threshold = self.baseline_mse * (1.0 + self.overall_mse_tolerance)
-            if base_mse <= threshold:
+            if base_mse <= threshold and np.isfinite(event_mse):
                 return (event_mse, base_mse), self.selection_metric
             return None
         raise ValueError(f"Unknown selection_metric: {self.selection_metric}")

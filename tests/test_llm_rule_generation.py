@@ -346,19 +346,21 @@ def test_multidataset_powershell_script_generates_dataset_specific_rules_before_
     assert '--baseline_metric_path "./checkpoints/$BaselineSetting/validation_history.json"' in script
 
 
-def test_multihorizon_peak_transfer_script_generates_horizon_specific_rules_before_training():
+def test_multihorizon_peak_transfer_script_uses_dataset_level_rules_before_training():
     script = open("scripts/run_multihorizon_gpt55_peak_transfer.ps1", encoding="utf-8").read()
 
     assert "analysis/generate_dataset_llm_rules.py" in script
-    assert "param([string]$Data, [int]$PredLen)" in script
-    assert "$Data`_p$PredLen`_peak_transfer_rules.json" in script
-    assert '"--pred_len", "$PredLen"' in script
+    assert "function Ensure-DatasetRule" in script
+    assert "param([string]$Data)" in script
+    assert "$Data`_peak_transfer_rules.json" in script
+    assert '"--pred_len", "$RuleMiningPredLen"' in script
     assert '"--output_rule_path", $RulePath' in script
     assert '"--llm_rule_path", $RulePath' in script
-    assert "$RulePath = Get-RulePath -Data $Data -PredLen $PredLen" in script
+    assert "$RulePath = Get-RulePath -Data $Data" in script
+    assert "$RulePath = Get-RulePath -Data $Data -PredLen $PredLen" not in script
 
 
-def test_multidataset_full_horizon_summary_requires_horizon_specific_rule_path():
+def test_multidataset_full_horizon_summary_identifies_horizon_specific_rule_paths():
     from analysis.summarize_multidataset_peak_transfer_full_horizon import (
         _expected_rule_path,
         _is_horizon_specific_rule_path,
@@ -369,7 +371,7 @@ def test_multidataset_full_horizon_summary_requires_horizon_specific_rule_path()
     assert expected == "llm_rules/generated_rules/ETTh1_p336_peak_transfer_rules.json"
     assert _is_horizon_specific_rule_path("./llm_rules/generated_rules/ETTh1_p336_peak_transfer_rules.json", "ETTh1", 336)
     assert not _is_horizon_specific_rule_path("./llm_rules/generated_rules/ETTh1_peak_transfer_rules.json", "ETTh1", 336)
-    assert not _is_horizon_specific_rule_path("./llm_rules/generated_rules/ETTh1_p96_peak_transfer_rules.json", "ETTh1", 336)
+    assert _is_horizon_specific_rule_path("./llm_rules/generated_rules/ETTh1_p96_peak_transfer_rules.json", "ETTh1", 336)
 
 
 def test_generate_dataset_llm_rules_cli_runs_from_repo_root(tmp_path):

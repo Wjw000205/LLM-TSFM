@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -39,6 +40,7 @@ CSV_FIELDS = [
     "use_peak_shape_loss",
     "learning_rate",
     "status",
+    "event_mask_warning",
     "event_points",
     "total_prediction_elements",
     "event_ratio",
@@ -85,8 +87,10 @@ def _is_horizon_specific_rule_path(path: str | None, dataset: str, pred_len: int
     if not path:
         return False
     normalized = str(path).replace("\\", "/").lstrip("./").lower()
-    expected = _expected_rule_path(dataset, pred_len).lower()
-    return normalized.endswith(expected)
+    dataset_lower = dataset.lower()
+    if normalized.endswith(_expected_rule_path(dataset, pred_len).lower()):
+        return True
+    return re.search(rf"/?{re.escape(dataset_lower)}_p\d+_.*rules\.json$", normalized) is not None
 
 
 def summarize_runs(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -144,9 +148,15 @@ def _summarize_one(run: dict[str, Any]) -> dict[str, Any]:
     baseline_overall = float(baseline_metrics["mse"])
     expert_overall = float(expert_metrics["mse"])
     gated_overall = float(gated_metrics["mse"])
-    baseline_event = float(baseline_metrics["event_window_mse"])
-    expert_event = float(expert_metrics["event_window_mse"])
-    gated_event = float(gated_metrics["event_window_mse"])
+    baseline_event = _metric_float(baseline_metrics, "event_window_mse")
+    expert_event = _metric_float(expert_metrics, "event_window_mse")
+    gated_event = _metric_float(gated_metrics, "event_window_mse")
+    event_mask_warning = ""
+    if event_points == 0:
+        baseline_event = float("nan")
+        expert_event = float("nan")
+        gated_event = float("nan")
+        event_mask_warning = "empty_event_mask"
     observed_delta = gated_overall - baseline_overall
     expected_delta = event_ratio * (gated_event - baseline_event)
     non_event_delta = gated_non_event_mse - baseline_non_event_mse
@@ -171,7 +181,14 @@ def _summarize_one(run: dict[str, Any]) -> dict[str, Any]:
         "event_weight": _effective_value(expert_config, expert_loss, "event_weight"),
         "use_peak_shape_loss": _effective_value(expert_config, expert_loss, "use_peak_shape_loss"),
         "learning_rate": expert_config.get("learning_rate"),
-        "status": "guarded" if selected_reason == "guarded_event_mse" else str(selected_reason or "unknown"),
+        "status": (
+            "not_applicable_empty_mask"
+            if event_points == 0
+            else "guarded"
+            if selected_reason == "guarded_event_mse"
+            else str(selected_reason or "unknown")
+        ),
+        "event_mask_warning": event_mask_warning,
         "event_points": event_points,
         "total_prediction_elements": total_elements,
         "event_ratio": event_ratio,
@@ -194,9 +211,9 @@ def write_outputs(rows: list[dict[str, Any]], output_csv: Path, output_json: Pat
     with output_csv.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS)
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(_csv_sanitize(row) for row in rows)
 
-    output_json.write_text(json.dumps(rows, indent=2), encoding="utf-8")
+    output_json.write_text(json.dumps(_json_sanitize(rows), indent=2), encoding="utf-8")
     output_md.parent.mkdir(parents=True, exist_ok=True)
     output_md.write_text(render_markdown(rows), encoding="utf-8")
 
@@ -207,7 +224,7 @@ def render_markdown(rows: list[dict[str, Any]]) -> str:
         "",
         "## Scope",
         "",
-        "This report extends the gated peak-transfer check to ETTh1, ETTh2, and ETTm2 across pred_len 96, 192, 336, and 720. Each dataset uses its own GPT-5.5 generated peak-transfer rule file; no ETTm1 rule is reused.",
+        "This report extends the gated peak-transfer check to ETTh1, ETTh2, and ETTm2 across pred_len 96, 192, 336, and 720. Each dataset uses its own GPT-5.5 generated dataset-level peak-transfer rule file; no ETTm1 rule is reused.",
         "",
         "The evaluated path is still intentionally diagnostic: a pure DLinear baseline is trained first, a dataset-aware loss expert is fine-tuned from that checkpoint, then rule-gated evaluation copies the expert prediction only inside the event mask and keeps baseline predictions elsewhere.",
         "",
@@ -218,9 +235,10 @@ def render_markdown(rows: list[dict[str, Any]]) -> str:
     ]
     for row in rows:
         lines.append(
-            "| {dataset} | {pred_len} | {baseline_overall_mse:.6f} | {gated_overall_mse:.6f} | "
-            "{baseline_event_mse:.6f} | {gated_event_mse:.6f} | {event_reduction_pct:.2f}% | "
-            "{event_ratio_pct:.4f}% | {status} |".format(**row)
+            f"| {row['dataset']} | {row['pred_len']} | {_fmt_fixed(row['baseline_overall_mse'])} | "
+            f"{_fmt_fixed(row['gated_overall_mse'])} | {_fmt_fixed(row['baseline_event_mse'])} | "
+            f"{_fmt_fixed(row['gated_event_mse'])} | {_fmt_pct(row['event_reduction_pct'])} | "
+            f"{_fmt_pct(row['event_ratio_pct'], digits=4)} | {row['status']} |"
         )
 
     lines.extend(
@@ -236,9 +254,9 @@ def render_markdown(rows: list[dict[str, Any]]) -> str:
     )
     for row in rows:
         lines.append(
-            "| {dataset} | {pred_len} | {baseline_non_event_mse:.6f} | {gated_non_event_mse:.6f} | "
-            "{non_event_delta:.3e} | {expected_overall_delta_from_event:.3e} | "
-            "{observed_overall_delta:.3e} |".format(**row)
+            f"| {row['dataset']} | {row['pred_len']} | {_fmt_fixed(row['baseline_non_event_mse'])} | "
+            f"{_fmt_fixed(row['gated_non_event_mse'])} | {_fmt_sci(row['non_event_delta'])} | "
+            f"{_fmt_sci(row['expected_overall_delta_from_event'])} | {_fmt_sci(row['observed_overall_delta'])} |"
         )
 
     lines.extend(
@@ -259,12 +277,27 @@ def render_markdown(rows: list[dict[str, Any]]) -> str:
     lines.extend(
         [
             "",
+            "## Event Coverage",
+            "",
+            "| Dataset | pred_len | event_points | total_prediction_elements | event_mask_warning |",
+            "|---|---:|---:|---:|---|",
+        ]
+    )
+    for row in rows:
+        lines.append(
+            f"| {row['dataset']} | {row['pred_len']} | {row['event_points']} | "
+            f"{row['total_prediction_elements']} | {row['event_mask_warning'] or ''} |"
+        )
+
+    lines.extend(
+        [
+            "",
             "## Interpretation",
             "",
-            "- ETTh1 improves event-window MSE at 96 and 192, but the same standard peak-transfer setting degrades event-window MSE at 336 and 720. Its long-horizon rule/loss configuration is therefore not robust without the stricter conservative settings used in the ETTm1 consolidation.",
-            "- ETTh2 improves event-window MSE at all four horizons, with stronger gains as the horizon grows in this sweep.",
-            "- ETTm2 improves event-window MSE at all four horizons, but 192 and 336 are fallback selections rather than guardrail-selected experts, so those two should be labeled diagnostic rather than fully guarded wins.",
-            "- Event ratios are only about 0.04% to 0.20% in this sweep, so overall MSE changes are necessarily tiny. The expected-vs-observed delta check confirms that overall movement is explained by the event-local replacement.",
+            "- The regenerated GPT-5.5 dataset-level rules produced zero test event coverage for all 12 dataset/horizon combinations.",
+            "- Because the test event mask is empty, event-window MSE and event reduction are not applicable, and gated evaluation is exactly the baseline in all rows.",
+            "- This run resolves the horizon-reuse issue, but it also shows that the current GPT rule mining prompt is too conservative or too train-evidence-specific for transferable test-time event discovery.",
+            "- The next method change should target transferable event mining with train-only evidence, then require a nonzero validation/test event coverage diagnostic before running expensive event-loss fine-tuning.",
             "",
             "## Artifacts",
             "",
@@ -282,17 +315,62 @@ def _require_files(paths: list[Path]) -> None:
         raise FileNotFoundError("Missing required result files:\n" + "\n".join(missing))
 
 
+def _fmt_fixed(value: Any, digits: int = 6) -> str:
+    value = _as_finite_float(value)
+    return "NA" if value is None else f"{value:.{digits}f}"
+
+
+def _fmt_sci(value: Any) -> str:
+    value = _as_finite_float(value)
+    return "NA" if value is None else f"{value:.3e}"
+
+
+def _fmt_pct(value: Any, digits: int = 2) -> str:
+    value = _as_finite_float(value)
+    return "NA" if value is None else f"{value:.{digits}f}%"
+
+
+def _as_finite_float(value: Any) -> float | None:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+    return numeric if np.isfinite(numeric) else None
+
+
+def _csv_sanitize(row: dict[str, Any]) -> dict[str, Any]:
+    return {key: ("" if _is_nonfinite_float(value) else value) for key, value in row.items()}
+
+
+def _json_sanitize(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(key): _json_sanitize(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_sanitize(item) for item in value]
+    if _is_nonfinite_float(value):
+        return None
+    if isinstance(value, np.generic):
+        return value.item()
+    return value
+
+
+def _is_nonfinite_float(value: Any) -> bool:
+    return isinstance(value, float) and not np.isfinite(value)
+
+
 def _validate_horizon_rule_config(config: dict[str, Any], run: dict[str, Any], result_dir: Path) -> None:
     dataset = str(run["dataset"])
     pred_len = int(run["pred_len"])
     actual = config.get("llm_rule_path")
     if _is_horizon_specific_rule_path(actual, dataset, pred_len):
+        raise ValueError(
+            f"{result_dir} uses a horizon-specific event rule path for {dataset} p{pred_len}: {actual!r}. "
+            "Event timestamp locations must be horizon-independent; use a dataset-level rule path instead."
+        )
+    if actual:
         return
-    expected = _expected_rule_path(dataset, pred_len)
     raise ValueError(
-        f"{result_dir} was not produced with a horizon-specific rule file for {dataset} p{pred_len}. "
-        f"Expected llm_rule_path to end with {expected}, got {actual!r}. "
-        "Rerun scripts/run_multihorizon_gpt55_peak_transfer.ps1 after generating per-horizon rules."
+        f"{result_dir} has no llm_rule_path. Event-mask diagnostics require a dataset-level rule file."
     )
 
 
@@ -303,9 +381,16 @@ def _read_json(path: Path) -> dict[str, Any]:
 def _masked_mse(pred: np.ndarray, true: np.ndarray, mask: np.ndarray) -> float:
     denom = int(mask.sum())
     if denom == 0:
-        return 0.0
+        return float("nan")
     diff = np.asarray(pred - true)
     return float(np.square(diff)[mask].mean())
+
+
+def _metric_float(metrics: dict[str, Any], key: str) -> float:
+    value = metrics.get(key)
+    if value is None:
+        return float("nan")
+    return float(value)
 
 
 def _effective_value(config: dict[str, Any], loss: dict[str, Any], key: str):

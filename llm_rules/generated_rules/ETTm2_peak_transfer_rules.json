@@ -1,23 +1,96 @@
 {
   "dataset_name": "ETTm2",
-  "analysis_scope": "gpt55_peak_transfer_diagnostic",
+  "analysis_scope": "llm_dataset_specific_pretraining",
   "patterns": [
     {
-      "name": "ot_july_short_peak_window_transfer",
-      "type": "peak_event",
-      "description": "Transfer diagnostic derived from the ETTm2 GPT-5.5 peak hypothesis `ot_july_short_peak_window`; zero hypotheses are intentionally excluded.",
+      "name": "hufl_zero_block_2016_12_18",
+      "type": "zero_event",
+      "description": "HUFL has a localized train-split block of raw zero values, consistent with a sparse sensor outage or shutdown-like interval.",
       "condition": {
         "kind": "calendar_window",
-        "anchor": "2016-07-07 15:00:00",
-        "center_day": 7,
-        "center_hour": 15,
-        "month_interval": 2,
-        "window_hours": 2
+        "windows": [
+          {
+            "start": "2016-12-18 08:00:00",
+            "end": "2016-12-18 10:45:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "HUFL"
+      ],
+      "time_range": "explicit_window",
+      "support_count": 1,
+      "evidence_windows": [
+        [
+          "2016-12-18 08:00:00",
+          "2016-12-18 10:45:00"
+        ]
+      ],
+      "confidence": 0.62,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true
+      }
+    },
+    {
+      "name": "hull_zero_block_2016_08_10",
+      "type": "zero_event",
+      "description": "HULL has a localized train-split block of raw zero values over a short window, consistent with a sparse sensor outage or shutdown-like interval.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-08-10 14:30:00",
+            "end": "2016-08-10 16:30:00"
+          }
+        ]
+      },
+      "affected_variables": [
+        "HULL"
+      ],
+      "time_range": "explicit_window",
+      "support_count": 1,
+      "evidence_windows": [
+        [
+          "2016-08-10 14:30:00",
+          "2016-08-10 16:30:00"
+        ]
+      ],
+      "confidence": 0.56,
+      "losses": {
+        "event_weighted_mse": {
+          "enabled": true,
+          "weight": 5.0
+        }
+      },
+      "features": {
+        "event_mask": true,
+        "days_to_event": true
+      }
+    },
+    {
+      "name": "ot_peak_2016_07_07_afternoon",
+      "type": "peak_event",
+      "description": "OT exceeds its high-threshold evidence over a localized afternoon train-split window, forming a rare peak episode.",
+      "condition": {
+        "kind": "calendar_window",
+        "windows": [
+          {
+            "start": "2016-07-07 13:45:00",
+            "end": "2016-07-07 16:30:00"
+          }
+        ]
       },
       "affected_variables": [
         "OT"
       ],
-      "time_range": "localized_peak_transfer_window",
+      "time_range": "explicit_window",
       "support_count": 1,
       "evidence_windows": [
         [
@@ -25,7 +98,7 @@
           "2016-07-07 16:30:00"
         ]
       ],
-      "confidence": 0.5,
+      "confidence": 0.58,
       "losses": {
         "event_weighted_mse": {
           "enabled": true,
@@ -44,7 +117,9 @@
     }
   ],
   "warnings": [
-    "Diagnostic transfer rule derived from ETTm2-specific GPT-5.5 analysis. This is not reused from ETTm1 and does not include zero-event hypotheses."
+    "Only train-profile candidate windows were used.",
+    "Near-zero evidence appears as localized one-off windows, so explicit calendar_window conditions are used instead of recurring calendar rules.",
+    "No zero_consistency loss is emitted for GPT-generated hypotheses."
   ],
-  "confidence": 0.5
+  "confidence": 0.58
 }

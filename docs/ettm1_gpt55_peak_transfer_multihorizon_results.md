@@ -11,6 +11,21 @@ This report consolidates the guarded ETTm1 multi-horizon gated peak-transfer res
 | 336 | 0.371105 | 0.371076 | 0.071750 | 0.038095 | 46.91% | guarded |
 | 720 | 0.431983 | 0.431945 | 0.213412 | 0.169587 | 20.54% | guarded |
 
+## Horizon-Invariance Audit
+
+Update 2026-07-07: the ETTm1 peak-transfer rule is treated as a horizon-independent event definition. The event mask is generated from absolute timestamps over the full CSV timeline, then each Dataset split/window slices that global mask. `pred_len` changes how many sliding windows repeat each event, not where the event timestamps are located.
+
+Diagnostic artifact: `artifacts/core_results/ettm1_event_mask_horizon_invariance.json`.
+
+| pred_len | unique_event_timestamps | repeated_event_points | pred_timestamp_start | pred_timestamp_end |
+|---:|---:|---:|---|---|
+| 96 | 66 | 6,336 | 2017-10-24 00:00:00 | 2018-02-20 23:45:00 |
+| 192 | 66 | 12,672 | 2017-10-24 00:00:00 | 2018-02-20 23:45:00 |
+| 336 | 66 | 22,176 | 2017-10-24 00:00:00 | 2018-02-20 23:45:00 |
+| 720 | 66 | 47,520 | 2017-10-24 00:00:00 | 2018-02-20 23:45:00 |
+
+The unique event timestamp set is identical for all four horizons, so the ETTm1 multi-horizon event metrics remain valid under the horizon-invariance audit.
+
 ## Guardrail Configuration
 
 All four accepted results use `selection_metric=guarded_event_mse` and `overall_mse_tolerance=0.03`.
@@ -26,7 +41,7 @@ The 336 and 720 horizons were rerun with conservative strict settings, so they a
 
 ## Event Ratio
 
-The event mask is extremely sparse under the current metric path, where total prediction elements are `samples * pred_len * channels`.
+The event mask is extremely sparse under the current metric path, where total prediction elements are `samples * pred_len * channels`. The event definition itself is horizon-independent; only repeated-window counting changes with `pred_len`.
 
 | pred_len | event_points | total_prediction_elements | event_ratio |
 |---:|---:|---:|---:|
@@ -65,11 +80,14 @@ The observed overall change is almost exactly explained by the event-local chang
 
 Across four prediction horizons, gated peak-transfer consistently reduces long-tail event-window MSE by 20% to 50% under a strict overall-MSE guardrail. Since the event ratio is below 0.1%, the resulting overall-MSE improvement is necessarily small, but it is consistent with the event-local nature of the intervention.
 
-中文补充：在四个预测长度下，gated peak-transfer 在严格 overall MSE guardrail 下稳定降低长尾事件误差。由于 event 占比低于 0.1%，overall MSE 的变化天然很小；这说明需要同时报告 event-window MSE、non-event MSE 和 overall guardrail，而不能只看 overall MSE。
+Empty event masks are not scored as zero-error improvements. If `event_mask.sum() == 0`, event-window metrics are `NaN`/not applicable and summaries must mark the result as `not_applicable_empty_mask`.
+
+Event definition is horizon-independent; prediction horizon only changes repeated-window counting. Empty event masks must not be reported as improvements.
 
 ## Artifacts
 
 - `artifacts/core_results/ettm1_gpt55_peak_transfer_multihorizon_summary.csv`
 - `artifacts/core_results/ettm1_gpt55_peak_transfer_multihorizon_summary.json`
+- `artifacts/core_results/ettm1_event_mask_horizon_invariance.json`
 - `docs/ettm1_gpt55_peak_transfer_strict_336_720_results.md`
 - `scripts/run_multihorizon_gpt55_peak_transfer.ps1`

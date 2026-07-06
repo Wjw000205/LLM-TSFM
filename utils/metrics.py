@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import warnings
+from typing import Any
 
 import numpy as np
 
@@ -30,7 +31,7 @@ def mspe(pred, true):
     return np.mean(np.square((pred - true) / (true + EPS)))
 
 
-def metric(pred, true, masks=None) -> dict[str, float]:
+def metric(pred, true, masks=None) -> dict[str, Any]:
     """Compute base and event-aware metrics for arrays shaped ``[N, L, C]``."""
     pred = np.asarray(pred, dtype=np.float32)
     true = np.asarray(true, dtype=np.float32)
@@ -60,8 +61,13 @@ def metric(pred, true, masks=None) -> dict[str, float]:
     result["num_event_points"] = int(event_mask.sum())
     result["num_zero_event_points"] = int(zero_mask.sum())
     result["num_peak_event_points"] = int(peak_mask.sum())
+    result["event_count"] = result["num_event_points"]
+    if result["num_event_points"] == 0:
+        result["event_mask_warning"] = "empty_event_mask"
+        result["warning"] = "empty_event_mask"
+        result["summary_status"] = "not_applicable_empty_mask"
     if result["num_event_points"] == 0 and result["num_zero_event_points"] == 0 and result["num_peak_event_points"] == 0:
-        warnings.warn("Event mask is empty; event-window metrics are zero by construction.", UserWarning, stacklevel=2)
+        warnings.warn("Event mask is empty; event-window metrics are not applicable.", UserWarning, stacklevel=2)
     return result
 
 
@@ -80,7 +86,7 @@ def _mask_channel(masks: np.ndarray, channel: int) -> np.ndarray:
 def _masked_metric(pred, true, mask, squared: bool) -> float:
     denom = mask.sum() * pred.shape[-1] if mask.shape[-1] == 1 else mask.sum()
     if denom <= EPS:
-        return 0.0
+        return float("nan")
     error = pred - true
     if squared:
         error = error**2

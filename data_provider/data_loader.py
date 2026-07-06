@@ -77,6 +77,9 @@ class TimeSeriesDataset(Dataset):
         self.target_indices: list[int] = []
         self.target_columns: list[str] = []
         self.input_columns: list[str] = []
+        self.full_timestamps: pd.DatetimeIndex | None = None
+        self.split_start_index = 0
+        self.split_end_index = 0
         self.feature_dim = 0
         self.raw_feature_dim = 0
         self.target_dim = 0
@@ -101,6 +104,8 @@ class TimeSeriesDataset(Dataset):
             raise ValueError(f"CSV file is empty: {file_path}")
         date_col = df_raw.columns[0]
         df_raw[date_col] = pd.to_datetime(df_raw[date_col])
+        full_dates = pd.DatetimeIndex(df_raw[date_col])
+        self.full_timestamps = full_dates
 
         input_cols, target_indices, target_columns = self._select_columns(df_raw, date_col)
         input_values = df_raw[input_cols].to_numpy(dtype=np.float32)
@@ -122,7 +127,9 @@ class TimeSeriesDataset(Dataset):
 
         self.zero_target = self._compute_zero_target()
         border1, border2 = self._split_borders(len(df_raw), self.flag)
-        dates = pd.DatetimeIndex(df_raw[date_col].iloc[border1:border2])
+        self.split_start_index = border1
+        self.split_end_index = border2
+        dates = full_dates[border1:border2]
         data_x = scaled_values[border1:border2]
         if self.features == "MS":
             data_y = scaled_values[border1:border2][:, target_indices]
@@ -135,9 +142,11 @@ class TimeSeriesDataset(Dataset):
         self.timestamps = dates
 
         rules = parse_llm_rules(self.llm_rule_path) if self.llm_rule_path else None
-        self.llm_features, self.llm_feature_names = self._build_aux_features(dates, rules)
+        full_llm_features, self.llm_feature_names = self._build_aux_features(full_dates, rules)
+        self.llm_features = full_llm_features[border1:border2]
         self.llm_feature_dim = self.llm_features.shape[1]
-        self.event_masks = self._build_mask_array(dates, rules)
+        self.global_event_masks = self._build_mask_array(full_dates, rules)
+        self.event_masks = self.global_event_masks[border1:border2]
 
     def __getitem__(self, index):
         s_begin = index
@@ -165,6 +174,43 @@ class TimeSeriesDataset(Dataset):
 
     def __len__(self):
         return max(0, len(self.data_x) - self.seq_len - self.pred_len + 1)
+
+    def get_prediction_timestamps(self, index: int) -> dict:
+        """Return timestamp and mask alignment details for one sliding window."""
+        if index < 0 or index >= len(self):
+            raise IndexError(f"index {index} out of range for dataset length {len(self)}")
+
+        s_begin = index
+        s_end = s_begin + self.seq_len
+        r_begin = s_end - self.label_len
+        r_end = r_begin + self.label_len + self.pred_len
+
+        seq_x_timestamps = self.timestamps[s_begin:s_end]
+        seq_y_timestamps = self.timestamps[r_begin:r_end]
+        pred_timestamps = seq_y_timestamps[-self.pred_len :]
+        seq_y_event_masks = self.event_masks[r_begin:r_end]
+        pred_event_masks = seq_y_event_masks[-self.pred_len :]
+
+        return {
+            "index": int(index),
+            "split_start_index": int(self.split_start_index),
+            "split_end_index": int(self.split_end_index),
+            "seq_x_index_start": int(s_begin),
+            "seq_x_index_end_exclusive": int(s_end),
+            "seq_y_index_start": int(r_begin),
+            "seq_y_index_end_exclusive": int(r_end),
+            "pred_index_start": int(r_end - self.pred_len),
+            "pred_index_end_exclusive": int(r_end),
+            "seq_x_start": seq_x_timestamps[0],
+            "seq_x_end": seq_x_timestamps[-1],
+            "seq_y_start": seq_y_timestamps[0],
+            "seq_y_end": seq_y_timestamps[-1],
+            "pred_start": pred_timestamps[0],
+            "pred_end": pred_timestamps[-1],
+            "pred_timestamps": pred_timestamps,
+            "seq_y_event_masks": seq_y_event_masks.copy(),
+            "pred_event_masks": pred_event_masks.copy(),
+        }
 
     def inverse_transform_target(self, data):
         """Inverse-transform target variables predicted by the model."""

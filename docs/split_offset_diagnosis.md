@@ -22,6 +22,12 @@
 8. Shift-aware rule recommended: `False`; calendar_window or re-mined rules are preferred when offsets are unstable.
 9. Predictability: `test_offsets_form_a_post_hoc_regime_but_are_outside_train_val_range`.
 
+## Horizon-Invariance Update
+
+Update 2026-07-07: event definitions must be horizon-independent. The Dataset now generates rule masks from the full CSV timestamp index first, then slices `global_event_mask[border1:border2]` for each split. Sliding-window `__getitem__` uses the same `r_begin:r_end` indices for `seq_y` and `seq_y_event_masks`, and the prediction mask is `seq_y_event_masks[-pred_len:]`.
+
+This keeps the original split-offset conclusion intact: the weak near-zero alignment reported below is a rule/distribution issue, not a Dataset slicing issue. A separate horizon-invariance diagnostic now checks that changing `pred_len` does not change the unique absolute event timestamps. Empty event masks are treated as `not_applicable_empty_mask`, not as zero-error improvements.
+
 ## Offset Predictability
 
 - Predictable from train/val: `False`.
