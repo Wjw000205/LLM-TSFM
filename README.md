@@ -49,6 +49,8 @@ LLM rules live in `llm_rules/example_rules/`. `calendar_periodic` rules should i
 
 The anchor prevents month-periodic masks from silently assuming January as the start of the cycle.
 
+Rules are dataset-specific. Do not reuse `ETTm1_rules.json` for ETTh1, ETTh2, ETTm2, Traffic, or any other dataset. Before training a rule-based run on a new dataset, generate that dataset's own rule file under `llm_rules/generated_rules/`.
+
 ## Feature Categories
 
 The framework separates three feature families:
@@ -210,6 +212,30 @@ python -m llm_miner.validate_rules \
   --target OT \
   --seq_len 336 \
   --output_dir ./artifacts/llm_miner/ETTm1
+```
+
+For direct OpenAI-compatible API generation before training:
+
+```bash
+export OPENAI_API_KEY=...
+export OPENAI_BASE_URL=https://api.ruikon.com/v1
+export OPENAI_MODEL=gpt-5.2
+
+python analysis/generate_dataset_llm_rules.py \
+  --data ETTh1 \
+  --root_path ./data/ \
+  --data_path ETTh1.csv \
+  --features M \
+  --target OT \
+  --seq_len 336 \
+  --profile_split train \
+  --output_rule_path ./llm_rules/generated_rules/ETTh1_rules.json
+```
+
+The multi-dataset rule-gated experiment script calls this generator once per dataset before training:
+
+```bash
+DATASETS="ETTm1 ETTh1 ETTh2 ETTm2" bash scripts/run_multidataset_llm_rulegate.sh
 ```
 
 ## Core Innovation Experiments

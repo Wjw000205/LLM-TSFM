@@ -54,6 +54,23 @@ Current validated LLM-based result is guarded longtail with validation guardrail
 - validation guardrail: selected epoch `1`, `val_base_mse=0.398042` versus baseline `0.383451`, within the configured `5%` tolerance
 - validation event MSE: `0.279899 -> 0.278254`
 
+Rule-gated ensemble result:
+
+- baseline model handles non-event timestamps.
+- aggressive event-specialized model `ettm1_event_push_w20_z0` handles only rule event timestamps.
+- event mask is a hard gate, so non-event predictions are exactly identical to baseline.
+- test overall MSE: `0.303677`
+- test rule-event MSE: `0.421775`
+- non-event max absolute prediction difference versus baseline: `0.0`
+- interpretation: this preserves the aggressive event improvement while removing the non-event pollution that caused overall MSE to rise.
+
+Cross-dataset note:
+
+- The earlier local ETTh1/ETTh2/ETTm2 rule-gated numbers reused the ETTm1 rule mask and are therefore mechanism checks only.
+- They must not be reported as full LLM-method evidence.
+- Formal cross-dataset experiments must first call `analysis/generate_dataset_llm_rules.py` for each dataset and then train with `--llm_rule_path ./llm_rules/generated_rules/${DATA}_rules.json`.
+- `scripts/run_multidataset_llm_rulegate.sh` implements this required order.
+
 Train/val-mined calendar-window diagnosis:
 
 | Step | Result | Interpretation |
@@ -66,7 +83,9 @@ Train/val-mined calendar-window diagnosis:
 
 The current `periodic_zero_day` LLM rule is not a reliable event detector and its validation residual pattern does not transfer to test. Soft weighting and zero-init intervention reduce blast radius, but they still learn a split-specific correction from an unstable rule.
 
-The deployable improvement currently comes from guarded dataset-aware longtail tuning on the original LLM event mask, not from rule-prior fusion or mined calendar priors. The mined calendar-window route confirmed the same failure mode in a stricter way: without train precision gating it selected validation-specific windows, and training on them made event MSE worse. With train and val precision gating enabled, no ETTm1 calendar-window rule survives. The validated rule output is therefore intentionally empty, which is the correct no-op behavior for this rule family.
+The strongest current event/overall tradeoff comes from a rule-gated ensemble: use the event-specialized model only where the LLM rule mask is active and fall back to baseline everywhere else. This directly addresses the diagnosed failure mode: aggressive event training improves the small event subset but damages the much larger non-event subset. Hard gating prevents that non-event damage.
+
+The mined calendar-window route confirmed a separate rule-quality failure mode: without train precision gating it selected validation-specific windows, and training on them made event MSE worse. With train and val precision gating enabled, no ETTm1 calendar-window rule survives. The validated rule output is therefore intentionally empty, which is the correct no-op behavior for this rule family.
 
 The next useful path is not more MLP or alpha tuning. It is rule-quality improvement:
 
