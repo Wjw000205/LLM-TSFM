@@ -1,30 +1,71 @@
-# ETTm1 GPT-5.5 Peak-Transfer Multihorizon Results
+# ETTm1 GPT-5.5 Gated Peak-Transfer Multi-Horizon Results
 
-## Scope
+## Main Results
 
-This run checks the current LLM-assisted event method across multiple forecast horizons on ETTm1. The method stays aligned with the current direction:
+This report consolidates the guarded ETTm1 multi-horizon gated peak-transfer results. All metrics use `metrics_normalized.json`.
 
-- GPT-5.5 provides the sparse peak-event hypothesis.
-- DLinear is trained as the pure baseline.
-- A loss expert is fine-tuned with `DatasetAwareLoss` on the peak-event mask.
-- The gated prediction uses the baseline outside event windows and the loss expert inside event windows.
-
-All numbers below use `metrics_normalized.json`.
-
-## Results
-
-| Pred Len | Baseline Overall MSE | Gated Overall MSE | Baseline Event MSE | Gated Event MSE | Event Reduction | Status |
+| pred_len | Baseline Overall | Gated Overall | Baseline Event | Gated Event | Event Reduction | Status |
 |---:|---:|---:|---:|---:|---:|---|
 | 96 | 0.307031 | 0.307010 | 0.051324 | 0.025899 | 49.54% | guarded |
 | 192 | 0.339500 | 0.339479 | 0.065048 | 0.039033 | 39.99% | guarded |
 | 336 | 0.371105 | 0.371076 | 0.071750 | 0.038095 | 46.91% | guarded |
 | 720 | 0.431983 | 0.431945 | 0.213412 | 0.169587 | 20.54% | guarded |
 
-## Conclusion
+## Guardrail Configuration
 
-The multihorizon result supports the current hypothesis: the event/overall conflict is caused by letting the event-focused loss expert affect non-event regions. When event gating is used, overall MSE stays at the DLinear baseline while event MSE drops substantially.
+All four accepted results use `selection_metric=guarded_event_mse` and `overall_mse_tolerance=0.03`.
 
-All four horizons now use validation-guarded checkpoints. Pred_len 336 and 720 were rerun with a conservative strict setup (`event_weight=1.0`, `use_peak_shape_loss=0`) so the selected checkpoint has `selected_reason=guarded_event_mse` rather than fallback. The p720 event gain is smaller than the earlier fallback diagnostic, but it is the reliable result to report.
+| pred_len | selected_epoch | event_weight | use_peak_shape_loss | learning_rate |
+|---:|---:|---:|---:|---:|
+| 96 | 3 | 5.0 | true | 1e-5 |
+| 192 | 4 | 5.0 | true | 1e-5 |
+| 336 | 9 | 1.0 | 0 | 1e-6 |
+| 720 | 1 | 1.0 | 0 | 5e-7 |
+
+The 336 and 720 horizons were rerun with conservative strict settings, so they are no longer fallback diagnostics.
+
+## Event Ratio
+
+The event mask is extremely sparse under the current metric path, where total prediction elements are `samples * pred_len * channels`.
+
+| pred_len | event_points | total_prediction_elements | event_ratio |
+|---:|---:|---:|---:|
+| 96 | 6,336 | 7,677,600 | 0.0825% |
+| 192 | 12,672 | 15,226,176 | 0.0832% |
+| 336 | 22,176 | 26,307,120 | 0.0843% |
+| 720 | 47,520 | 54,437,040 | 0.0873% |
+
+## Non-Event Preservation
+
+The gated prediction uses the loss expert only inside the event mask and keeps the DLinear baseline outside it.
+
+| pred_len | Baseline Non-event MSE | Gated Non-event MSE | Non-event Delta |
+|---:|---:|---:|---:|
+| 96 | 0.307242 | 0.307242 | 0.000000 |
+| 192 | 0.339729 | 0.339729 | 0.000000 |
+| 336 | 0.371358 | 0.371358 | 0.000000 |
+| 720 | 0.432175 | 0.432175 | 0.000000 |
+
+## Why Overall MSE Changes Only Slightly
+
+Overall MSE is diluted by the rarity of the event region. The expected overall change from event improvement alone is:
+
+`event_ratio * (gated_event_mse - baseline_event_mse)`
+
+| pred_len | Expected Overall Delta From Event | Observed Overall Delta | Delta Match Error |
+|---:|---:|---:|---:|
+| 96 | -2.098e-5 | -2.095e-5 | 3.129e-8 |
+| 192 | -2.165e-5 | -2.161e-5 | 4.480e-8 |
+| 336 | -2.837e-5 | -2.840e-5 | -3.184e-8 |
+| 720 | -3.826e-5 | -3.821e-5 | 4.958e-8 |
+
+The observed overall change is almost exactly explained by the event-local change. This confirms that gated peak-transfer is acting in the intended sparse region and is not hiding broad non-event damage.
+
+## Main Conclusion
+
+Across four prediction horizons, gated peak-transfer consistently reduces long-tail event-window MSE by 20% to 50% under a strict overall-MSE guardrail. Since the event ratio is below 0.1%, the resulting overall-MSE improvement is necessarily small, but it is consistent with the event-local nature of the intervention.
+
+中文补充：在四个预测长度下，gated peak-transfer 在严格 overall MSE guardrail 下稳定降低长尾事件误差。由于 event 占比低于 0.1%，overall MSE 的变化天然很小；这说明需要同时报告 event-window MSE、non-event MSE 和 overall guardrail，而不能只看 overall MSE。
 
 ## Artifacts
 

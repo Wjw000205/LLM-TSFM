@@ -1,0 +1,13 @@
+Experiment,Pred_len,Overall MSE,Event MSE,Non-event MSE,Event Reduction,Non-event Delta,Mask Type,Status,Notes
+baseline,96,0.3070307970046997,0.051323793828487396,0.3072420060634613,0.0,0.0,none,reference,Pure DLinear baseline.
+correct_gated_mask,96,0.30700984597206116,0.025898627936840057,0.3072420060634613,49.53874995409057,0.0,correct,evaluated,Uses loss expert only under the original event mask.
+shuffled_event_mask,96,0.3070199489593506,0.051326144486665726,0.30723121762275696,-0.004580055375845441,-1.0788440704345703e-05,shuffled,evaluated,Uses the same mask density but assigns event windows to other samples.
+shifted_wrong_mask_24h,96,0.30702000856399536,0.051323793828487396,0.30723118782043457,0.0,-1.0818243026733398e-05,shifted_by_96_steps,evaluated,Uses the mask from a 24h-shifted sample index for ETTm1.
+random_sparse_mask_same_ratio,96,0.30703356862068176,0.05131010711193085,0.30724483728408813,0.026667390571879796,2.8312206268310547e-06,random_same_ratio,evaluated,Uses random sparse positions with the same event count.
+no_gate_global_transfer,96,0.31012701988220215,0.025898627936840057,0.3103616237640381,49.53874995409057,0.0031196177005767822,global_no_gate,evaluated,Uses the loss expert everywhere without event gating.
+baseline,192,0.33950021862983704,0.06504824757575989,0.3397294878959656,0.0,0.0,none,reference,Pure DLinear baseline.
+correct_gated_mask,192,0.33947861194610596,0.03903268650174141,0.3397294878959656,39.99425356343209,0.0,correct,evaluated,Uses loss expert only under the original event mask.
+shuffled_event_mask,192,0.3394927382469177,0.0650312677025795,0.3397215008735657,0.026103505956272564,-7.987022399902344e-06,shuffled,evaluated,Uses the same mask density but assigns event windows to other samples.
+shifted_wrong_mask_24h,192,0.33949679136276245,0.06504824757575989,0.3397260010242462,0.0,-3.4868717193603516e-06,shifted_by_96_steps,evaluated,Uses the mask from a 24h-shifted sample index for ETTm1.
+random_sparse_mask_same_ratio,192,0.3395134210586548,0.06502282619476318,0.3397426903247833,0.039080808390874064,1.3202428817749023e-05,random_same_ratio,evaluated,Uses random sparse positions with the same event count.
+no_gate_global_transfer,192,0.35424482822418213,0.03903268650174141,0.3545074164867401,39.99425356343209,0.014777928590774536,global_no_gate,evaluated,Uses the loss expert everywhere without event gating.
