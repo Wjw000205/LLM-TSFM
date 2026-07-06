@@ -1,0 +1,293 @@
+{
+  "data": "ETTm1",
+  "analysis_scope": "train_val_validated",
+  "test_usage": "not_used_for_selection",
+  "near_zero_quantile": 0.05,
+  "min_train_precision": 0.25,
+  "min_val_precision": 0.25,
+  "min_val_recall": 0.02,
+  "threshold_by_channel": {
+    "HUFL": 0.44778990745544434,
+    "HULL": 0.03206288814544678,
+    "MUFL": 0.3411823511123657,
+    "MULL": 0.07379838824272156,
+    "LUFL": 1.4050205945968628,
+    "LULL": 0.6735794544219971,
+    "OT": 0.5751640796661377
+  },
+  "num_candidates": 4704,
+  "num_selected": 0,
+  "selected_candidates": [],
+  "top_candidates": [
+    {
+      "name": "calendar_window_d28_h0_w12_m1_LULL",
+      "condition": {
+        "kind": "calendar_window",
+        "anchor": "2016-07-01 00:00:00",
+        "month_interval": 1,
+        "center_day": 28,
+        "center_hour": 0,
+        "window_hours": 12.0
+      },
+      "affected_variables": [
+        "LULL"
+      ],
+      "channel": "LULL",
+      "train_support": 45,
+      "train_predicted": 1067,
+      "train_precision": 0.04217432052483599,
+      "train_recall": 0.02332814930015552,
+      "train_f1": 0.030040053404539382,
+      "val_support": 184,
+      "val_predicted": 388,
+      "val_precision": 0.4742268041237113,
+      "val_recall": 0.15397489539748954,
+      "val_f1": 0.23246999368288063,
+      "val_false_positive_ratio": 0.5257731958762887,
+      "selected": false
+    },
+    {
+      "name": "calendar_window_d28_h3_w12_m1_LULL",
+      "condition": {
+        "kind": "calendar_window",
+        "anchor": "2016-07-01 00:00:00",
+        "month_interval": 1,
+        "center_day": 28,
+        "center_hour": 3,
+        "window_hours": 12.0
+      },
+      "affected_variables": [
+        "LULL"
+      ],
+      "channel": "LULL",
+      "train_support": 61,
+      "train_predicted": 1067,
+      "train_precision": 0.05716963448922212,
+      "train_recall": 0.03162260238465526,
+      "train_f1": 0.04072096128170894,
+      "val_support": 184,
+      "val_predicted": 388,
+      "val_precision": 0.4742268041237113,
+      "val_recall": 0.15397489539748954,
+      "val_f1": 0.23246999368288063,
+      "val_false_positive_ratio": 0.5257731958762887,
+      "selected": false
+    },
+    {
+      "name": "calendar_window_d28_h6_w12_m1_LULL",
+      "condition": {
+        "kind": "calendar_window",
+        "anchor": "2016-07-01 00:00:00",
+        "month_interval": 1,
+        "center_day": 28,
+        "center_hour": 6,
+        "window_hours": 12.0
+      },
+      "affected_variables": [
+        "LULL"
+      ],
+      "channel": "LULL",
+      "train_support": 73,
+      "train_predicted": 1067,
+      "train_precision": 0.06841611996251172,
+      "train_recall": 0.03784344219803007,
+      "train_f1": 0.04873164218958612,
+      "val_support": 181,
+      "val_predicted": 388,
+      "val_precision": 0.46649484536082475,
+      "val_recall": 0.1514644351464435,
+      "val_f1": 0.2286797220467467,
+      "val_false_positive_ratio": 0.5335051546391752,
+      "selected": false
+    },
+    {
+      "name": "calendar_window_d28_h9_w12_m1_LULL",
+      "condition": {
+        "kind": "calendar_window",
+        "anchor": "2016-07-01 00:00:00",
+        "month_interval": 1,
+        "center_day": 28,
+        "center_hour": 9,
+        "window_hours": 12.0
+      },
+      "affected_variables": [
+        "LULL"
+      ],
+      "channel": "LULL",
+      "train_support": 77,
+      "train_predicted": 1067,
+      "train_precision": 0.07216494845360824,
+      "train_recall": 0.039917055469155,
+      "train_f1": 0.051401869158878497,
+      "val_support": 171,
+      "val_predicted": 388,
+      "val_precision": 0.44072164948453607,
+      "val_recall": 0.14309623430962343,
+      "val_f1": 0.21604548325963363,
+      "val_false_positive_ratio": 0.5592783505154639,
+      "selected": false
+    },
+    {
+      "name": "calendar_window_d28_h12_w12_m1_LULL",
+      "condition": {
+        "kind": "calendar_window",
+        "anchor": "2016-07-01 00:00:00",
+        "month_interval": 1,
+        "center_day": 28,
+        "center_hour": 12,
+        "window_hours": 12.0
+      },
+      "affected_variables": [
+        "LULL"
+      ],
+      "channel": "LULL",
+      "train_support": 82,
+      "train_predicted": 1066,
+      "train_precision": 0.07692307692307693,
+      "train_recall": 0.04250907205806117,
+      "train_f1": 0.054757929883138566,
+      "val_support": 170,
+      "val_predicted": 388,
+      "val_precision": 0.4381443298969072,
+      "val_recall": 0.14225941422594143,
+      "val_f1": 0.2147820593809223,
+      "val_false_positive_ratio": 0.5618556701030928,
+      "selected": false
+    },
+    {
+      "name": "calendar_window_d28_h15_w12_m1_LULL",
+      "condition": {
+        "kind": "calendar_window",
+        "anchor": "2016-07-01 00:00:00",
+        "month_interval": 1,
+        "center_day": 28,
+        "center_hour": 15,
+        "window_hours": 12.0
+      },
+      "affected_variables": [
+        "LULL"
+      ],
+      "channel": "LULL",
+      "train_support": 87,
+      "train_predicted": 1054,
+      "train_precision": 0.0825426944971537,
+      "train_recall": 0.04510108864696734,
+      "train_f1": 0.05833053972510894,
+      "val_support": 158,
+      "val_predicted": 388,
+      "val_precision": 0.4072164948453608,
+      "val_recall": 0.1322175732217573,
+      "val_f1": 0.1996209728363866,
+      "val_false_positive_ratio": 0.5927835051546392,
+      "selected": false
+    },
+    {
+      "name": "calendar_window_d28_h18_w12_m1_LULL",
+      "condition": {
+        "kind": "calendar_window",
+        "anchor": "2016-07-01 00:00:00",
+        "month_interval": 1,
+        "center_day": 28,
+        "center_hour": 18,
+        "window_hours": 12.0
+      },
+      "affected_variables": [
+        "LULL"
+      ],
+      "channel": "LULL",
+      "train_support": 87,
+      "train_predicted": 1042,
+      "train_precision": 0.08349328214971209,
+      "train_recall": 0.04510108864696734,
+      "train_f1": 0.05856613934702121,
+      "val_support": 146,
+      "val_predicted": 388,
+      "val_precision": 0.37628865979381443,
+      "val_recall": 0.12217573221757322,
+      "val_f1": 0.1844598862918509,
+      "val_false_positive_ratio": 0.6237113402061856,
+      "selected": false
+    },
+    {
+      "name": "calendar_window_d28_h21_w12_m1_LULL",
+      "condition": {
+        "kind": "calendar_window",
+        "anchor": "2016-07-01 00:00:00",
+        "month_interval": 1,
+        "center_day": 28,
+        "center_hour": 21,
+        "window_hours": 12.0
+      },
+      "affected_variables": [
+        "LULL"
+      ],
+      "channel": "LULL",
+      "train_support": 90,
+      "train_predicted": 1030,
+      "train_precision": 0.08737864077669903,
+      "train_recall": 0.04665629860031104,
+      "train_f1": 0.060831361946603574,
+      "val_support": 133,
+      "val_predicted": 388,
+      "val_precision": 0.3427835051546392,
+      "val_recall": 0.11129707112970712,
+      "val_f1": 0.16803537586860395,
+      "val_false_positive_ratio": 0.6572164948453608,
+      "selected": false
+    },
+    {
+      "name": "calendar_window_d29_h0_w12_m1_LULL",
+      "condition": {
+        "kind": "calendar_window",
+        "anchor": "2016-07-01 00:00:00",
+        "month_interval": 1,
+        "center_day": 29,
+        "center_hour": 0,
+        "window_hours": 12.0
+      },
+      "affected_variables": [
+        "LULL"
+      ],
+      "channel": "LULL",
+      "train_support": 90,
+      "train_predicted": 1067,
+      "train_precision": 0.08434864104967198,
+      "train_recall": 0.04665629860031104,
+      "train_f1": 0.060080106809078763,
+      "val_support": 121,
+      "val_predicted": 388,
+      "val_precision": 0.3118556701030928,
+      "val_recall": 0.10125523012552301,
+      "val_f1": 0.1528742893240682,
+      "val_false_positive_ratio": 0.6881443298969072,
+      "selected": false
+    },
+    {
+      "name": "calendar_window_d29_h3_w12_m1_LULL",
+      "condition": {
+        "kind": "calendar_window",
+        "anchor": "2016-07-01 00:00:00",
+        "month_interval": 1,
+        "center_day": 29,
+        "center_hour": 3,
+        "window_hours": 12.0
+      },
+      "affected_variables": [
+        "LULL"
+      ],
+      "channel": "LULL",
+      "train_support": 77,
+      "train_predicted": 1067,
+      "train_precision": 0.07216494845360824,
+      "train_recall": 0.039917055469155,
+      "train_f1": 0.051401869158878497,
+      "val_support": 114,
+      "val_predicted": 388,
+      "val_precision": 0.29381443298969073,
+      "val_recall": 0.09539748953974896,
+      "val_f1": 0.14403032217308906,
+      "val_false_positive_ratio": 0.7061855670103093,
+      "selected": false
+    }
+  ]
+}

@@ -33,7 +33,7 @@ COMMON_ARGS=(
 )
 
 BASELINE_SETTING="long_term_forecast_DLinear_ETTm1_ftM_sl336_ll48_pl96_ettm1_core_pure_dlinear_0"
-BASELINE_METRICS="./results/${BASELINE_SETTING}/metrics_normalized.json"
+BASELINE_METRICS="./checkpoints/${BASELINE_SETTING}/config.json"
 
 python main.py "${COMMON_ARGS[@]}" --early_stop_metric base_mse --selection_metric guarded_event_mse --overall_mse_tolerance 0.05 --baseline_metric_path "${BASELINE_METRICS}" --use_dataset_aware_loss 1 --use_event_weighted_loss 1 --use_zero_consistency_loss 1 --use_nonevent_preservation_loss 1 --use_peak_shape_loss 0 --use_diff_loss 0 --use_freq_loss 0 --event_weight 1.0 --zero_weight 0.1 --nonevent_weight 1.0 --des ettm1_longtail_low_weights
 python main.py "${COMMON_ARGS[@]}" --early_stop_metric base_mse --selection_metric guarded_event_mse --overall_mse_tolerance 0.05 --baseline_metric_path "${BASELINE_METRICS}" --use_dataset_aware_loss 1 --use_event_weighted_loss 1 --use_zero_consistency_loss 1 --use_nonevent_preservation_loss 1 --use_peak_shape_loss 0 --use_diff_loss 0 --use_freq_loss 0 --event_weight 2.0 --zero_weight 0.25 --nonevent_weight 1.0 --des ettm1_longtail_medium_weights
@@ -44,7 +44,7 @@ python analysis/summarize_core_results.py \
   --output_markdown docs/longtail_guardrail_results.md
 
 python analysis/select_pareto_longtail.py \
-  --baseline_metrics "${BASELINE_METRICS}" \
+  --baseline_metrics "./results/${BASELINE_SETTING}/metrics_normalized.json" \
   --sweep_csv artifacts/core_results/ettm1_weight_sweep.csv \
   --output_csv artifacts/core_results/ettm1_pareto_longtail.csv \
   --output_markdown docs/longtail_guardrail_results.md \

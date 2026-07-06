@@ -132,6 +132,10 @@ def test_intervention_cli_and_scripts_are_available():
     script = open("scripts/run_ettm1_intervention_core.sh", encoding="utf-8").read()
     assert "--use_intervention_layer 1" in script
     assert "--use_rule_adapter 1" in script
+    finetune_script = open("scripts/run_ettm1_intervention_finetune.sh", encoding="utf-8").read()
+    assert "--train_only_intervention 1" in finetune_script
+    assert "--load_pretrained_checkpoint" in finetune_script
+    assert "--selection_metric guarded_event_mse" in finetune_script
     analysis = open("analysis/summarize_intervention_results.py", encoding="utf-8").read()
     assert "Mean Event Gate" in analysis
 
@@ -203,3 +207,44 @@ def test_intervention_features_do_not_change_dlinear_backbone_input_dim(tmp_path
 
     assert dataset.llm_feature_dim > 0
     assert args.enc_in == dataset.raw_feature_dim
+
+
+def test_train_only_intervention_freezes_backbone_parameters():
+    from exp.exp_long_term_forecasting import apply_train_only_intervention_scope
+    from models.DLinear import DLinear
+
+    args = SimpleNamespace(
+        seq_len=12,
+        pred_len=4,
+        enc_in=3,
+        c_out=3,
+        individual=0,
+        moving_avg=3,
+        use_revin=0,
+        dlinear_init_avg=0,
+        use_intervention_layer=1,
+        llm_feature_dim=2,
+        intervention_hidden=8,
+        intervention_dropout=0.0,
+        intervention_scale=1.0,
+        intervention_init_zero=1,
+    )
+    module = torch.nn.ModuleDict({"model": DLinear(args)})
+
+    summary = apply_train_only_intervention_scope(module)
+
+    assert summary["trainable_parameters"] > 0
+    assert summary["frozen_parameters"] > 0
+    for name, param in module.named_parameters():
+        if "intervention_layer" in name:
+            assert param.requires_grad, name
+        else:
+            assert not param.requires_grad, name
+
+
+def test_train_only_intervention_cli_arg_is_available():
+    from main import get_args
+
+    args = get_args_from_tokens(["--train_only_intervention", "1"], get_args)
+
+    assert args.train_only_intervention == 1

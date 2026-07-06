@@ -51,6 +51,7 @@ class ExpLongTermForecasting:
         if self.rule_adapter is not None:
             self.training_module["rule_adapter"] = self.rule_adapter
         self._load_pretrained_checkpoint()
+        self.train_scope_summary = self._apply_training_scope()
         self.baseline_model = self._build_baseline_model()
         self.criterion = build_loss(args)
         print_run_config(self.args)
@@ -63,7 +64,7 @@ class ExpLongTermForecasting:
         checkpoint_dir = Path(self.args.checkpoints) / setting
         save_run_config(self.args, checkpoint_dir)
         save_loss_config(self.criterion, checkpoint_dir)
-        optimizer = optim.Adam(self.training_module.parameters(), lr=float(self.args.learning_rate))
+        optimizer = optim.Adam(trainable_parameters(self.training_module), lr=float(self.args.learning_rate))
         early_stopping = EarlyStopping(patience=int(self.args.patience))
         baseline_mse = load_baseline_mse(getattr(self.args, "baseline_metric_path", None))
         selector = GuardedCheckpointSelector(
@@ -83,8 +84,10 @@ class ExpLongTermForecasting:
             for batch in self.train_loader:
                 optimizer.zero_grad(set_to_none=True)
                 with self._autocast(amp_enabled):
-                    pred, true, masks, baseline_pred = self._process_batch(batch)
-                    loss_dict = self.criterion(pred, true, batch_masks=masks, baseline_pred=baseline_pred)
+                    pred, true, masks, baseline_pred, future_llm = self._process_batch(batch)
+                    loss_dict = self.criterion(
+                        pred, true, batch_masks=masks, baseline_pred=baseline_pred, batch_features=future_llm
+                    )
                     loss_dict = self._add_intervention_components(loss_dict)
                     loss = loss_dict["loss"]
 
@@ -129,8 +132,10 @@ class ExpLongTermForecasting:
         steps = 0
         with torch.no_grad():
             for batch in self.val_loader:
-                pred, true, masks, baseline_pred = self._process_batch(batch)
-                loss_dict = self.criterion(pred, true, batch_masks=masks, baseline_pred=baseline_pred)
+                pred, true, masks, baseline_pred, future_llm = self._process_batch(batch)
+                loss_dict = self.criterion(
+                    pred, true, batch_masks=masks, baseline_pred=baseline_pred, batch_features=future_llm
+                )
                 loss_dict = self._add_intervention_components(loss_dict)
                 _accumulate(component_sums, loss_dict)
                 preds.append(pred.detach().cpu().numpy())
@@ -166,7 +171,7 @@ class ExpLongTermForecasting:
         preds, trues, masks_all, intervention_stats = [], [], [], []
         with torch.no_grad():
             for batch in self.test_loader:
-                pred, true, masks, _ = self._process_batch(batch)
+                pred, true, masks, _, _ = self._process_batch(batch)
                 preds.append(pred.detach().cpu().numpy())
                 trues.append(true.detach().cpu().numpy())
                 masks_all.append(masks.detach().cpu().numpy())
@@ -256,7 +261,7 @@ class ExpLongTermForecasting:
             pred = self.rule_adapter(pred, future_llm, masks)
         if bool_flag(getattr(self.args, "use_hard_intervention", False)):
             pred = apply_hard_intervention(pred, masks, getattr(self.args, "zero_target", [0.0] * int(self.args.c_out)))
-        return pred, true, masks, baseline_pred
+        return pred, true, masks, baseline_pred, future_llm
 
     def _add_intervention_components(self, loss_dict: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         reg_loss = self._intervention_reg_loss()
@@ -304,6 +309,10 @@ class ExpLongTermForecasting:
             alpha=float(getattr(self.args, "rule_prior_alpha", 0.5)),
             use_confidence=bool_flag(getattr(self.args, "rule_prior_use_confidence", False)),
             rule_prior_types=getattr(self.args, "rule_prior_types", "zero_event"),
+            mode=getattr(self.args, "rule_prior_mode", "fixed"),
+            validated_rule_path=getattr(self.args, "validated_rule_path", None),
+            disable_invalid_rules=bool_flag(getattr(self.args, "disable_invalid_rules", True)),
+            channel_names=list(getattr(self.train_data, "target_columns", [])),
         ).to(self.device)
 
     def _load_pretrained_checkpoint(self):
@@ -359,6 +368,25 @@ class ExpLongTermForecasting:
         print(f"loaded_baseline_distillation_checkpoint: {path}")
         return baseline_model
 
+    def _apply_training_scope(self) -> dict[str, int]:
+        if not bool_flag(getattr(self.args, "train_only_intervention", False)):
+            return trainable_parameter_summary(self.training_module)
+        if not bool_flag(getattr(self.args, "use_intervention_layer", False)):
+            raise ValueError("train_only_intervention=1 requires use_intervention_layer=1.")
+        if not getattr(self.args, "load_pretrained_checkpoint", None):
+            raise ValueError("train_only_intervention=1 requires load_pretrained_checkpoint.")
+        if getattr(self.model, "intervention_layer", None) is None:
+            raise ValueError("train_only_intervention=1 requires an initialized intervention_layer.")
+        summary = apply_train_only_intervention_scope(self.training_module)
+        if summary["trainable_parameters"] <= 0:
+            raise ValueError("train_only_intervention=1 found no trainable intervention parameters.")
+        print(
+            "train_scope: train_only_intervention "
+            f"trainable_parameters={summary['trainable_parameters']} "
+            f"frozen_parameters={summary['frozen_parameters']}"
+        )
+        return summary
+
     @staticmethod
     def _print_epoch(epoch, train_components, val_components, learning_rate, early_stop_metric):
         fields = {
@@ -368,6 +396,7 @@ class ExpLongTermForecasting:
             "train_base_mse_loss": train_components["base_loss"],
             "val_base_mse_loss": val_components["base_loss"],
             "event_loss": train_components["event_loss"],
+            "soft_event_loss": train_components["soft_event_loss"],
             "zero_loss": train_components["zero_loss"],
             "peak_loss": train_components["peak_loss"],
             "diff_loss": train_components["diff_loss"],
@@ -394,6 +423,7 @@ def _empty_components():
         "loss": 0.0,
         "base_loss": 0.0,
         "event_loss": 0.0,
+        "soft_event_loss": 0.0,
         "zero_loss": 0.0,
         "peak_loss": 0.0,
         "diff_loss": 0.0,
@@ -443,6 +473,31 @@ def _average_stat_rows(rows: list[dict[str, float]]) -> dict[str, float]:
         return _zero_intervention_stats()
     keys = _zero_intervention_stats().keys()
     return {key: float(np.mean([row.get(key, 0.0) for row in rows])) for key in keys}
+
+
+def apply_train_only_intervention_scope(module: torch.nn.Module) -> dict[str, int]:
+    """Freeze every parameter except the timestamp-conditioned intervention layer."""
+    for name, param in module.named_parameters():
+        param.requires_grad_("intervention_layer" in name)
+    return trainable_parameter_summary(module)
+
+
+def trainable_parameter_summary(module: torch.nn.Module) -> dict[str, int]:
+    """Return trainable/frozen parameter counts for audit logs and tests."""
+    trainable = 0
+    frozen = 0
+    for param in module.parameters():
+        count = int(param.numel())
+        if param.requires_grad:
+            trainable += count
+        else:
+            frozen += count
+    return {"trainable_parameters": trainable, "frozen_parameters": frozen}
+
+
+def trainable_parameters(module: torch.nn.Module):
+    """Yield only parameters that should be optimized."""
+    return [param for param in module.parameters() if param.requires_grad]
 
 
 def select_early_stop_value(losses: dict[str, float], metric: str) -> float:
@@ -558,10 +613,23 @@ def load_baseline_mse(path: str | None) -> float | None:
     if not metrics_path.exists():
         raise FileNotFoundError(f"Baseline metrics file not found: {metrics_path}")
     payload = json.loads(metrics_path.read_text(encoding="utf-8"))
-    for key in ("mse", "overall_mse", "Overall MSE"):
-        if key in payload:
-            return float(payload[key])
-    raise KeyError(f"Baseline metrics file must contain one of mse/overall_mse/Overall MSE: {metrics_path}")
+    if isinstance(payload, list):
+        values = [float(row["val_base_mse"]) for row in payload if "val_base_mse" in row]
+        if values:
+            return min(values)
+    if isinstance(payload, dict):
+        selected_metrics = payload.get("selected_metrics")
+        if isinstance(selected_metrics, dict):
+            for key in ("val_base_mse", "base_loss", "mse", "overall_mse", "Overall MSE"):
+                if key in selected_metrics:
+                    return float(selected_metrics[key])
+        for key in ("val_base_mse", "base_loss", "mse", "overall_mse", "Overall MSE"):
+            if key in payload:
+                return float(payload[key])
+    raise KeyError(
+        "Baseline metrics file must contain val_base_mse/base_loss/mse/overall_mse, "
+        f"or validation_history rows with val_base_mse: {metrics_path}"
+    )
 
 
 def save_validation_history(rows: list[dict[str, float | int]], output_dir: str | Path):
@@ -691,6 +759,7 @@ def print_run_config(args):
         "use_oracle_features",
         "use_dataset_aware_loss",
         "use_event_weighted_loss",
+        "use_soft_event_weighted_loss",
         "use_zero_consistency_loss",
         "use_peak_shape_loss",
         "use_diff_loss",
@@ -698,6 +767,9 @@ def print_run_config(args):
         "use_nonevent_preservation_loss",
         "use_baseline_distillation",
         "event_weight",
+        "soft_event_weight",
+        "soft_event_feature_regex",
+        "soft_event_power",
         "zero_weight",
         "peak_weight",
         "diff_weight",
@@ -705,6 +777,8 @@ def print_run_config(args):
         "nonevent_weight",
         "distill_weight",
         "peak_window_size",
+        "use_shift_aware_rule",
+        "rule_shift_steps",
         "selection_metric",
         "overall_mse_tolerance",
         "baseline_metric_path",
@@ -721,10 +795,14 @@ def print_run_config(args):
         "intervention_init_zero",
         "use_intervention_reg",
         "intervention_reg_weight",
+        "train_only_intervention",
         "use_rule_prior_fusion",
         "rule_prior_alpha",
         "rule_prior_use_confidence",
         "rule_prior_types",
+        "rule_prior_mode",
+        "validated_rule_path",
+        "disable_invalid_rules",
         "use_hard_intervention",
         "dlinear_init_avg",
         "inverse",

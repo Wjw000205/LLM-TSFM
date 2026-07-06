@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from argparse import Namespace
+import re
 
 import torch
 import torch.nn as nn
@@ -27,7 +28,9 @@ class DatasetAwareLoss(nn.Module):
         self.use_freq_loss = _flag(self.config, "use_freq_loss", False)
         self.use_nonevent_preservation_loss = _flag(self.config, "use_nonevent_preservation_loss", False)
         self.use_baseline_distillation = _flag(self.config, "use_baseline_distillation", False)
+        self.use_soft_event_weighted_loss = _flag(self.config, "use_soft_event_weighted_loss", False)
         self.event_weight = float(self.config.get("event_weight", 1.0))
+        self.soft_event_weight = float(self.config.get("soft_event_weight", 1.0))
         self.zero_weight = float(self.config.get("zero_weight", 1.0))
         self.peak_weight = float(self.config.get("peak_weight", 1.0))
         self.diff_weight = float(self.config.get("diff_weight", 1.0))
@@ -35,13 +38,16 @@ class DatasetAwareLoss(nn.Module):
         self.nonevent_weight = float(self.config.get("nonevent_weight", 1.0))
         self.distill_weight = float(self.config.get("distill_weight", 1.0))
         self.peak_window_size = max(1, int(self.config.get("peak_window_size", 1)))
+        self.soft_event_feature_regex = str(self.config.get("soft_event_feature_regex", "soft_event_score"))
+        self.soft_event_power = float(self.config.get("soft_event_power", 1.0))
+        self.llm_feature_names = list(self.config.get("llm_feature_names", []))
         zero_target = self.config.get("zero_target", None)
         if zero_target is None:
             self.zero_target = None
         else:
             self.register_buffer("zero_target", torch.as_tensor(zero_target, dtype=torch.float32).view(1, 1, -1))
 
-    def forward(self, pred, true, batch_marks=None, batch_masks=None, baseline_pred=None):
+    def forward(self, pred, true, batch_marks=None, batch_masks=None, baseline_pred=None, batch_features=None):
         """Return total loss and every component as tensors."""
         base_loss = F.mse_loss(pred, true)
         zero = pred.new_tensor(0.0)
@@ -52,10 +58,14 @@ class DatasetAwareLoss(nn.Module):
         freq_loss = zero
         nonevent_loss = zero
         distill_loss = zero
+        soft_event_loss = zero
 
         masks = self._parse_masks(batch_masks, pred)
+        soft_event_mask = self._soft_event_mask(batch_features, pred)
         if self.use_event_weighted_loss and masks["event"] is not None:
             event_loss = self._masked_mse(pred, true, masks["event"])
+        if self.use_soft_event_weighted_loss and soft_event_mask is not None:
+            soft_event_loss = self._masked_mse(pred, true, soft_event_mask)
         if self.use_nonevent_preservation_loss and masks["event"] is not None:
             nonevent_loss = self._masked_mse(pred, true, self._non_event_mask(masks["event"]))
         if self.use_baseline_distillation and baseline_pred is not None and masks["event"] is not None:
@@ -73,6 +83,7 @@ class DatasetAwareLoss(nn.Module):
 
         total = base_loss
         total = total + self.event_weight * event_loss
+        total = total + self.soft_event_weight * soft_event_loss
         total = total + self.zero_weight * zero_loss
         total = total + self.peak_weight * peak_loss
         total = total + self.diff_weight * diff_loss
@@ -84,6 +95,7 @@ class DatasetAwareLoss(nn.Module):
             "loss": total,
             "base_loss": base_loss,
             "event_loss": event_loss,
+            "soft_event_loss": soft_event_loss,
             "zero_loss": zero_loss,
             "peak_loss": peak_loss,
             "diff_loss": diff_loss,
@@ -120,6 +132,23 @@ class DatasetAwareLoss(nn.Module):
             "zero": mask[..., 1:2] if mask.shape[-1] > 1 else None,
             "peak": mask[..., 2:3] if mask.shape[-1] > 2 else None,
         }
+
+    def _soft_event_mask(self, batch_features, pred):
+        if not self.use_soft_event_weighted_loss or batch_features is None:
+            return None
+        features = _to_mask(batch_features, pred)
+        if features is None or features.numel() == 0 or features.shape[-1] <= 0:
+            return None
+        indices = [
+            idx for idx, name in enumerate(self.llm_feature_names) if re.search(self.soft_event_feature_regex, str(name))
+        ]
+        if not indices:
+            return None
+        selected = features[..., indices]
+        mask = torch.clamp(selected.max(dim=-1, keepdim=True).values, min=0.0, max=1.0)
+        if self.soft_event_power != 1.0:
+            mask = mask.pow(self.soft_event_power)
+        return mask
 
     def _masked_mse(self, pred, true, mask):
         denom = self._mask_denominator(mask, pred.shape[-1])

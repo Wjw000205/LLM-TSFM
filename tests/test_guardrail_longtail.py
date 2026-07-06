@@ -146,3 +146,32 @@ def test_guardrail_scripts_and_pareto_selector_exist(tmp_path):
 
     assert result["best"]["experiment"] == "good"
     assert result["best"]["accepted_by_guardrail"] is True
+
+
+def test_load_baseline_mse_accepts_validation_metric_config(tmp_path):
+    from exp.exp_long_term_forecasting import load_baseline_mse
+
+    config_path = tmp_path / "config.json"
+    config_path.write_text(
+        json.dumps({"selected_metrics": {"val_base_mse": 0.38345}, "mse": 0.30703}),
+        encoding="utf-8",
+    )
+
+    assert load_baseline_mse(str(config_path)) == 0.38345
+
+
+def test_load_baseline_mse_accepts_validation_history(tmp_path):
+    from exp.exp_long_term_forecasting import load_baseline_mse
+
+    history_path = tmp_path / "validation_history.json"
+    history_path.write_text(
+        json.dumps(
+            [
+                {"epoch": 1, "val_base_mse": 0.4},
+                {"epoch": 2, "val_base_mse": 0.35},
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    assert load_baseline_mse(str(history_path)) == 0.35

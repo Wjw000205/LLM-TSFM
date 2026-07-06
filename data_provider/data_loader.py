@@ -45,6 +45,8 @@ class TimeSeriesDataset(Dataset):
         use_llm_rule_features: bool | None = None,
         use_oracle_features: bool = False,
         llm_rule_path: str | None = None,
+        use_shift_aware_rule: bool = False,
+        rule_shift_steps: int = 0,
         scaler: StandardScaler | None = None,
     ):
         if flag not in self.flag_map:
@@ -66,6 +68,8 @@ class TimeSeriesDataset(Dataset):
             self.use_llm_rule_features = _flag(use_llm_rule_features)
         self.use_oracle_features = _flag(use_oracle_features)
         self.llm_rule_path = llm_rule_path
+        self.use_shift_aware_rule = _flag(use_shift_aware_rule)
+        self.rule_shift_steps = int(rule_shift_steps)
         self.scaler = scaler
 
         self.mask_names = ["event_mask", "zero_mask", "peak_mask"]
@@ -217,7 +221,10 @@ class TimeSeriesDataset(Dataset):
         if rules is None:
             return np.zeros((len(dates), len(self.mask_names), self.target_dim), dtype=np.float32)
         masks = generate_event_mask(dates, rules, target_columns=self.target_columns)
-        return np.stack([masks[name] for name in self.mask_names], axis=1).astype(np.float32)
+        stacked = np.stack([masks[name] for name in self.mask_names], axis=1).astype(np.float32)
+        if self.use_shift_aware_rule and self.rule_shift_steps != 0:
+            return shift_mask_array(stacked, self.rule_shift_steps)
+        return stacked
 
     def _build_aux_features(self, dates, rules):
         arrays: list[np.ndarray] = []
@@ -271,3 +278,16 @@ def _flag(value) -> bool:
     if isinstance(value, str):
         return value.lower() in {"1", "true", "yes", "y"}
     return bool(value)
+
+
+def shift_mask_array(mask: np.ndarray, steps: int) -> np.ndarray:
+    """Shift a time-major mask by integer steps without wraparound."""
+    steps = int(steps)
+    shifted = np.zeros_like(mask)
+    if steps == 0:
+        return mask.copy()
+    if steps > 0:
+        shifted[steps:] = mask[:-steps]
+    else:
+        shifted[:steps] = mask[-steps:]
+    return shifted

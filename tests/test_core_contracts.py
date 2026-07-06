@@ -90,6 +90,7 @@ def test_rule_masks_and_features_cover_supported_conditions():
     assert llm_features.shape[0] == 48
     assert time_features.shape[0] == 48
     assert "event_mask_first_day_OT" in llm_names
+    assert "soft_event_score_first_day" in llm_names
     assert "peak_mask_noon_peak_HUFL" in llm_names
     assert "hour_distance_to_peak_noon_peak" in llm_names
     assert "day_of_week" in time_names
@@ -243,12 +244,34 @@ def test_dataset_aware_loss_uses_masks_and_returns_all_components():
         "freq_loss",
         "nonevent_loss",
         "distill_loss",
+        "soft_event_loss",
     }
     assert set(loss_dict) == expected_keys
     assert loss_dict["event_loss"] > 0
     assert loss_dict["zero_loss"] > 0
     assert torch.isclose(loss_dict["peak_loss"], torch.tensor(0.0))
     assert loss_dict["loss"] > loss_dict["base_loss"]
+
+
+def test_soft_event_weighted_loss_uses_named_llm_feature():
+    from losses.dataset_aware_loss import DatasetAwareLoss
+
+    pred = torch.tensor([[[2.0], [4.0], [8.0]]])
+    true = torch.zeros_like(pred)
+    features = torch.tensor([[[1.0, 0.2], [0.0, 1.0], [0.0, 0.0]]])
+    criterion = DatasetAwareLoss(
+        {
+            "use_soft_event_weighted_loss": True,
+            "soft_event_weight": 2.0,
+            "soft_event_feature_regex": "soft_event_score",
+            "llm_feature_names": ["llm_rule::soft_event_score_rule_a", "llm_rule::other"],
+        }
+    )
+
+    loss_dict = criterion(pred, true, batch_features=features)
+
+    assert torch.isclose(loss_dict["soft_event_loss"], torch.tensor(4.0))
+    assert torch.isclose(loss_dict["loss"], loss_dict["base_loss"] + 2.0 * loss_dict["soft_event_loss"])
 
 
 def test_zero_consistency_uses_scaled_zero_target_per_channel():

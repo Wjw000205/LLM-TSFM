@@ -21,6 +21,7 @@ def build_loss(args: Namespace) -> DatasetAwareLoss:
         config.update(
             {
                 "use_event_weighted_loss": False,
+                "use_soft_event_weighted_loss": False,
                 "use_zero_consistency_loss": False,
                 "use_peak_shape_loss": False,
                 "use_diff_loss": False,

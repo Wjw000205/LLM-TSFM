@@ -26,6 +26,8 @@ def data_provider(args, flag: str):
         use_llm_rule_features=getattr(args, "use_llm_rule_features", None),
         use_oracle_features=getattr(args, "use_oracle_features", False),
         llm_rule_path=getattr(args, "llm_rule_path", None),
+        use_shift_aware_rule=getattr(args, "use_shift_aware_rule", False),
+        rule_shift_steps=getattr(args, "rule_shift_steps", 0),
         scaler=scaler,
     )
 

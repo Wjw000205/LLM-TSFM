@@ -49,8 +49,12 @@ def generate_llm_rule_features(timestamps, rules, target_columns: list[str] | No
         if pattern.features.get("zero_event_mask") or pattern.type == "zero_event":
             _append_channel_features(arrays, names, mask, f"zero_event_mask_{pattern.name}", target_columns)
         if pattern.features.get("days_to_event"):
-            arrays.append(_days_to_next_event(dates, mask.max(axis=1)).reshape(-1, 1))
+            days_to_event = _days_to_next_event(dates, mask.max(axis=1))
+            arrays.append(days_to_event.reshape(-1, 1))
             names.append(f"days_to_event_{pattern.name}")
+            tau_days = float(pattern.features.get("soft_event_tau_days", 1.0))
+            arrays.append(_soft_event_score(days_to_event, tau_days).reshape(-1, 1))
+            names.append(f"soft_event_score_{pattern.name}")
         if pattern.features.get("hour_distance_to_peak"):
             hour = int(pattern.condition.get("hour", 0))
             arrays.append(_hour_distance(dates.hour.to_numpy(), hour).reshape(-1, 1))
@@ -113,6 +117,12 @@ def _days_to_next_event(dates: pd.DatetimeIndex, mask: np.ndarray) -> np.ndarray
             delta = dates[event_positions[pos]] - dates[idx]
             result[idx] = max(0.0, delta.total_seconds() / 86400.0)
     return result.astype(np.float32)
+
+
+def _soft_event_score(days_to_event: np.ndarray, tau_days: float) -> np.ndarray:
+    tau_days = max(float(tau_days), 1e-6)
+    score = np.exp(-np.asarray(days_to_event, dtype=np.float32) / tau_days)
+    return np.clip(score, 0.0, 1.0).astype(np.float32)
 
 
 def _hour_distance(hours: np.ndarray, target_hour: int) -> np.ndarray:

@@ -34,7 +34,7 @@ COMMON_ARGS=(
 
 BASELINE_SETTING="long_term_forecast_DLinear_ETTm1_ftM_sl336_ll48_pl96_ettm1_core_pure_dlinear_0"
 BASELINE_CHECKPOINT="./checkpoints/${BASELINE_SETTING}/checkpoint.pth"
-BASELINE_METRICS="./results/${BASELINE_SETTING}/metrics_normalized.json"
+BASELINE_METRICS="./artifacts/core_results/ettm1_original_rule_baseline_val_metrics.json"
 
 if [[ ! -f "${BASELINE_CHECKPOINT}" || ! -f "${BASELINE_METRICS}" ]]; then
   python main.py "${COMMON_ARGS[@]}" \
@@ -69,7 +69,7 @@ python main.py "${COMMON_ARGS[@]}" \
   --event_weight 1.0 \
   --zero_weight 0.1 \
   --nonevent_weight 1.0 \
-  --des ettm1_guarded_longtail_finetune
+  --des ettm1_guarded_longtail_valguard_rerun
 
 python analysis/summarize_core_results.py \
   --filter ettm1 \
@@ -77,7 +77,7 @@ python analysis/summarize_core_results.py \
   --output_markdown docs/core_innovation_results.md
 
 python analysis/select_pareto_longtail.py \
-  --baseline_metrics "${BASELINE_METRICS}" \
+  --baseline_metrics "./results/${BASELINE_SETTING}/metrics_normalized.json" \
   --sweep_csv artifacts/core_results/ettm1_weight_sweep.csv \
   --output_csv artifacts/core_results/ettm1_pareto_longtail.csv \
   --output_markdown docs/longtail_guardrail_results.md \

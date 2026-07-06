@@ -43,6 +43,7 @@ def diagnose_rule_prior(
     event_mask = masks[:, :, 0, :]
     zero_target = np.asarray(train_data.zero_target, dtype=np.float32).reshape(1, 1, -1)
     hard_pred = pred * (1.0 - zero_mask) + zero_mask * zero_target
+    true_original = test_data.inverse_transform_target(true)
 
     theoretical_zero_mse = _masked_mse(hard_pred, true, zero_mask)
     theoretical_event_mse = _masked_mse(hard_pred, true, event_mask)
@@ -57,6 +58,11 @@ def diagnose_rule_prior(
         "mask_alignment": _mask_alignment(test_data),
         "timestamp_alignment_samples": _timestamp_alignment_samples(test_data),
         "zero_target_offset_scan": _zero_target_offset_scan(test_data, zero_mask, timestamps, zero_target),
+        "per_channel_diagnostics": _per_channel_diagnostics(
+            pred, true, true_original, zero_mask, zero_target.reshape(-1), test_data.target_columns
+        ),
+        "unique_timestamp_diagnostics": _unique_timestamp_diagnostics(pred, true, zero_mask, timestamps),
+        "prior_comparison": _prior_comparison(pred, true, zero_mask, zero_target.reshape(-1), test_data.target_columns),
         "true_at_zero_mask": _masked_stats(true, zero_mask, zero_target),
         "baseline_pred_at_zero_mask": _masked_stats(pred, zero_mask, zero_target),
         "theoretical_zero_event_mse": theoretical_zero_mse,
@@ -191,6 +197,94 @@ def _first_zero_timestamps(zero_mask, timestamps, columns, limit: int = 20):
     return rows
 
 
+def _per_channel_diagnostics(pred, true, true_original, zero_mask, zero_target, columns):
+    rows = {}
+    for idx, column in enumerate(columns):
+        mask = zero_mask[:, :, idx] > 0
+        if mask.sum() <= 0:
+            rows[column] = {
+                "mask_count": 0,
+                "baseline_zero_mse": 0.0,
+                "zero_prior_mse": 0.0,
+                "true_mean_original": 0.0,
+                "true_std_original": 0.0,
+                "true_near_zero_ratio": 0.0,
+                "best_alpha_closed_form": 0.0,
+                "best_alpha_sweep": 0.0,
+                "zero_prior_valid": False,
+            }
+            continue
+        base = pred[:, :, idx][mask]
+        label = true[:, :, idx][mask]
+        original = true_original[:, :, idx][mask]
+        zero = np.full_like(label, zero_target[idx])
+        baseline_mse = float(np.mean((base - label) ** 2))
+        zero_mse = float(np.mean((zero - label) ** 2))
+        rows[column] = {
+            "mask_count": int(mask.sum()),
+            "baseline_zero_mse": baseline_mse,
+            "zero_prior_mse": zero_mse,
+            "true_mean_original": float(original.mean()),
+            "true_std_original": float(original.std()),
+            "true_near_zero_ratio": float((np.abs(original) <= 1e-6).mean()),
+            "best_alpha_closed_form": _best_alpha_closed_form(base, label, zero),
+            "best_alpha_sweep": _best_alpha_sweep(base, label, zero),
+            "zero_prior_valid": bool(zero_mse < baseline_mse),
+        }
+    return rows
+
+
+def _unique_timestamp_diagnostics(pred, true, zero_mask, timestamps):
+    hits = np.argwhere(zero_mask > 0)
+    repeated_mse = _masked_mse(pred, true, zero_mask)
+    if len(hits) == 0:
+        return {
+            "num_masked_window_points": 0,
+            "num_unique_masked_timestamps": 0,
+            "unique_timestamp_event_mse": 0.0,
+            "repeated_window_event_mse": repeated_mse,
+        }
+    grouped: dict[tuple[str, int], list[float]] = {}
+    for window_idx, horizon_idx, channel_idx in hits:
+        key = (str(timestamps[window_idx, horizon_idx]), int(channel_idx))
+        error = float((pred[window_idx, horizon_idx, channel_idx] - true[window_idx, horizon_idx, channel_idx]) ** 2)
+        grouped.setdefault(key, []).append(error)
+    unique_mse = float(np.mean([np.mean(values) for values in grouped.values()]))
+    return {
+        "num_masked_window_points": int(len(hits)),
+        "num_unique_masked_timestamps": int(len(grouped)),
+        "unique_timestamp_event_mse": unique_mse,
+        "repeated_window_event_mse": repeated_mse,
+    }
+
+
+def _prior_comparison(pred, true, zero_mask, zero_target, columns):
+    rows = {}
+    for idx, column in enumerate(columns):
+        mask = zero_mask[:, :, idx] > 0
+        if mask.sum() <= 0:
+            rows[column] = {"best_prior": "none", "mask_count": 0}
+            continue
+        base = pred[:, :, idx][mask]
+        label = true[:, :, idx][mask]
+        residual = label - base
+        candidates = {
+            "baseline": base,
+            "zero_target": np.full_like(base, zero_target[idx]),
+            "residual_mean": base + float(residual.mean()),
+            "residual_median": base + float(np.median(residual)),
+            "ratio": base * float(np.mean(label / (base + np.where(np.abs(base) < 1e-8, 1e-8, 0.0)))),
+            "conditional_mean": np.full_like(base, float(label.mean())),
+        }
+        metrics = {name: float(np.mean((value - label) ** 2)) for name, value in candidates.items()}
+        rows[column] = {
+            "mask_count": int(mask.sum()),
+            **metrics,
+            "best_prior": min(metrics, key=metrics.get),
+        }
+    return rows
+
+
 def _masked_stats(values, mask, zero_target):
     if mask.sum() <= 1e-8:
         return {"mean": 0.0, "variance": 0.0, "mse_to_zero_target": 0.0}
@@ -208,6 +302,27 @@ def _masked_mse(pred, true, mask):
     if denom <= 1e-8:
         return 0.0
     return float((((pred - true) ** 2) * mask).sum() / denom)
+
+
+def _best_alpha_closed_form(base, label, prior):
+    direction = prior - base
+    denom = float(np.sum(direction**2))
+    if denom <= 1e-8:
+        return 0.0
+    alpha = float(np.sum((label - base) * direction) / denom)
+    return max(0.0, min(1.0, alpha))
+
+
+def _best_alpha_sweep(base, label, prior):
+    best_alpha = 0.0
+    best_mse = float(np.mean((base - label) ** 2))
+    for alpha in [0.0, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0]:
+        fused = base + alpha * (prior - base)
+        mse = float(np.mean((fused - label) ** 2))
+        if mse < best_mse:
+            best_mse = mse
+            best_alpha = alpha
+    return float(best_alpha)
 
 
 def _interpret(diagnosis: dict) -> list[str]:

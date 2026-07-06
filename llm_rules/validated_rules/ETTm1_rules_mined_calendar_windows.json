@@ -1,0 +1,8 @@
+{
+  "dataset_name": "ETTm1",
+  "analysis_scope": "train_val_validated",
+  "warnings": [
+    "Generated without using the test split for selection."
+  ],
+  "patterns": []
+}

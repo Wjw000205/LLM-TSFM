@@ -65,6 +65,18 @@ def _condition_mask(dates: pd.DatetimeIndex, pattern: RulePattern) -> np.ndarray
         month_offset = (dates.year - anchor.year) * 12 + (dates.month - anchor.month)
         month_ok = (month_offset >= 0) & ((month_offset % month_interval) == 0)
         return (dates.day == day) & month_ok
+    if kind == "calendar_window":
+        center_day = int(condition.get("center_day", condition.get("day", 1)))
+        center_hour = int(condition.get("center_hour", 0))
+        month_interval = max(1, int(condition.get("month_interval", 1)))
+        window = pd.Timedelta(hours=float(condition.get("window_hours", 24)))
+        anchor = pd.Timestamp(condition.get("anchor", dates[0]))
+        month_offset = (dates.year - anchor.year) * 12 + (dates.month - anchor.month)
+        month_ok = (month_offset >= 0) & ((month_offset % month_interval) == 0)
+        centers = pd.DatetimeIndex(
+            [_safe_month_day(ts.year, ts.month, center_day) + pd.Timedelta(hours=center_hour) for ts in dates]
+        )
+        return month_ok & (np.abs(dates - centers) <= window)
     if kind == "hourly":
         return dates.hour == int(condition.get("hour", 0))
     if kind == "weekday":
@@ -102,3 +114,8 @@ def _to_datetime_index(timestamps) -> pd.DatetimeIndex:
     if isinstance(timestamps, pd.DatetimeIndex):
         return timestamps
     return pd.DatetimeIndex(pd.to_datetime(timestamps))
+
+
+def _safe_month_day(year: int, month: int, day: int) -> pd.Timestamp:
+    last_day = pd.Period(f"{year:04d}-{month:02d}").days_in_month
+    return pd.Timestamp(year=year, month=month, day=min(day, last_day))
