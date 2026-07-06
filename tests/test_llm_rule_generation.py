@@ -33,6 +33,30 @@ def test_build_dataset_profile_contains_dataset_specific_calendar_and_stats(tmp_
     assert profile["statistics"]["OT"]["mean"] == 23.5
 
 
+def test_build_dataset_profile_records_forecast_horizon(tmp_path):
+    from analysis.generate_dataset_llm_rules import build_dataset_profile
+
+    path = tmp_path / "Toy.csv"
+    pd.DataFrame(
+        {
+            "date": pd.date_range("2020-01-01", periods=48, freq="h"),
+            "OT": list(range(48)),
+        }
+    ).to_csv(path, index=False)
+
+    profile = build_dataset_profile(
+        data="Toy",
+        root_path=str(tmp_path),
+        data_path="Toy.csv",
+        features="M",
+        target="OT",
+        seq_len=12,
+        pred_len=24,
+    )
+
+    assert profile["forecast_horizon"] == {"seq_len": 12, "pred_len": 24}
+
+
 def test_normalize_llm_rule_payload_forces_dataset_name_and_supported_features():
     from analysis.generate_dataset_llm_rules import normalize_llm_rule_payload
     from llm_rules.rule_parser import parse_llm_rules
@@ -322,6 +346,32 @@ def test_multidataset_powershell_script_generates_dataset_specific_rules_before_
     assert '--baseline_metric_path "./checkpoints/$BaselineSetting/validation_history.json"' in script
 
 
+def test_multihorizon_peak_transfer_script_generates_horizon_specific_rules_before_training():
+    script = open("scripts/run_multihorizon_gpt55_peak_transfer.ps1", encoding="utf-8").read()
+
+    assert "analysis/generate_dataset_llm_rules.py" in script
+    assert "param([string]$Data, [int]$PredLen)" in script
+    assert "$Data`_p$PredLen`_peak_transfer_rules.json" in script
+    assert '"--pred_len", "$PredLen"' in script
+    assert '"--output_rule_path", $RulePath' in script
+    assert '"--llm_rule_path", $RulePath' in script
+    assert "$RulePath = Get-RulePath -Data $Data -PredLen $PredLen" in script
+
+
+def test_multidataset_full_horizon_summary_requires_horizon_specific_rule_path():
+    from analysis.summarize_multidataset_peak_transfer_full_horizon import (
+        _expected_rule_path,
+        _is_horizon_specific_rule_path,
+    )
+
+    expected = _expected_rule_path("ETTh1", 336)
+
+    assert expected == "llm_rules/generated_rules/ETTh1_p336_peak_transfer_rules.json"
+    assert _is_horizon_specific_rule_path("./llm_rules/generated_rules/ETTh1_p336_peak_transfer_rules.json", "ETTh1", 336)
+    assert not _is_horizon_specific_rule_path("./llm_rules/generated_rules/ETTh1_peak_transfer_rules.json", "ETTh1", 336)
+    assert not _is_horizon_specific_rule_path("./llm_rules/generated_rules/ETTh1_p96_peak_transfer_rules.json", "ETTh1", 336)
+
+
 def test_generate_dataset_llm_rules_cli_runs_from_repo_root(tmp_path):
     csv_path = tmp_path / "Toy.csv"
     pd.DataFrame(
@@ -345,6 +395,8 @@ def test_generate_dataset_llm_rules_cli_runs_from_repo_root(tmp_path):
             "Toy.csv",
             "--seq_len",
             "12",
+            "--pred_len",
+            "24",
             "--dry_run_profile_only",
             "1",
             "--output_rule_path",
@@ -356,4 +408,6 @@ def test_generate_dataset_llm_rules_cli_runs_from_repo_root(tmp_path):
     )
 
     assert json.loads(rule_path.read_text(encoding="utf-8"))["dataset_name"] == "Toy"
-    assert json.loads(report_path.read_text(encoding="utf-8"))["split"] == "train"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["split"] == "train"
+    assert report["profile"]["forecast_horizon"] == {"seq_len": 12, "pred_len": 24}

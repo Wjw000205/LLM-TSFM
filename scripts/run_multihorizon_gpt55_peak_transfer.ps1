@@ -13,6 +13,10 @@ param(
     [int]$Patience = 3,
     [double]$OverallMseTolerance = 0.03,
     [double]$GateAlpha = 1.0,
+    [int]$GenerateRules = 1,
+    [string]$RuleModel = "gpt-5.5",
+    [string]$RuleBaseUrl = "",
+    [string]$RuleApiKeyEnv = "OPENAI_API_KEY",
     [string]$PythonExe = "python"
 )
 
@@ -24,11 +28,14 @@ if ($PythonExe -eq "python" -and (Test-Path $DefaultMyFramPython)) {
 }
 
 function Get-RulePath {
-    param([string]$Data)
-    if ($Data -eq "ETTm1") {
-        return "./llm_rules/generated_rules/ETTm1_peak_rules.json"
-    }
-    return "./llm_rules/generated_rules/$Data`_peak_transfer_rules.json"
+    param([string]$Data, [int]$PredLen)
+    return "./llm_rules/generated_rules/$Data`_p$PredLen`_peak_transfer_rules.json"
+}
+
+function Get-RuleReportPath {
+    param([string]$Data, [int]$PredLen)
+    $Lower = $Data.ToLowerInvariant()
+    return "./artifacts/core_results/$Lower`_p$PredLen`_llm_rule_generation_report.json"
 }
 
 function Invoke-Checked {
@@ -38,6 +45,43 @@ function Invoke-Checked {
     if ($LASTEXITCODE -ne 0) {
         throw "Command failed ($LASTEXITCODE): $Name"
     }
+}
+
+function Ensure-HorizonRule {
+    param(
+        [string]$Data,
+        [string]$DataPath,
+        [string]$Freq,
+        [int]$PredLen,
+        [string]$RulePath,
+        [string]$RuleReportPath
+    )
+    if ($GenerateRules -eq 0) {
+        if (-not (Test-Path $RulePath)) {
+            throw "Missing horizon-specific rule file: $RulePath. Re-run with -GenerateRules 1 or create this file first."
+        }
+        return
+    }
+
+    $GenerateArgs = @(
+        "analysis/generate_dataset_llm_rules.py",
+        "--data", $Data,
+        "--root_path", $RootPath,
+        "--data_path", $DataPath,
+        "--features", $Features,
+        "--target", $Target,
+        "--seq_len", "$SeqLen",
+        "--pred_len", "$PredLen",
+        "--model", $RuleModel,
+        "--api_key_env", $RuleApiKeyEnv,
+        "--output_rule_path", $RulePath,
+        "--output_report_path", $RuleReportPath
+    )
+    if ($RuleBaseUrl -ne "") {
+        $GenerateArgs += @("--base_url", $RuleBaseUrl)
+    }
+
+    Invoke-Checked -Name "$Data pred_len=$PredLen generate horizon-specific rules" -Command (@($PythonExe) + $GenerateArgs)
 }
 
 function Get-FinetuneConfig {
@@ -71,9 +115,10 @@ foreach ($Data in $Datasets) {
     $Lower = $Data.ToLowerInvariant()
     $DataPath = "$Data.csv"
     $Freq = if ($Data.StartsWith("ETTm")) { "t" } else { "h" }
-    $RulePath = Get-RulePath -Data $Data
 
     foreach ($PredLen in $PredLens) {
+        $RulePath = Get-RulePath -Data $Data -PredLen $PredLen
+        $RuleReportPath = Get-RuleReportPath -Data $Data -PredLen $PredLen
         $BaselineDes = "$Lower`_gpt55_peak_transfer_p$PredLen`_baseline"
         $FinetuneConfig = Get-FinetuneConfig -Data $Data -PredLen $PredLen -DefaultLearningRate $FinetuneLearningRate
         $EventDes = $FinetuneConfig.Des
@@ -81,6 +126,8 @@ foreach ($Data in $Datasets) {
         $BaselineSetting = "long_term_forecast_DLinear_$Data`_ft$Features`_sl$SeqLen`_ll$LabelLen`_pl$PredLen`_$BaselineDes`_0"
         $EventSetting = "long_term_forecast_DLinear_$Data`_ft$Features`_sl$SeqLen`_ll$LabelLen`_pl$PredLen`_$EventDes`_0"
         $GatedSetting = "long_term_forecast_DLinear_$Data`_ft$Features`_sl$SeqLen`_ll$LabelLen`_pl$PredLen`_$GatedDes`_0"
+
+        Ensure-HorizonRule -Data $Data -DataPath $DataPath -Freq $Freq -PredLen $PredLen -RulePath $RulePath -RuleReportPath $RuleReportPath
 
         $CommonArgs = @(
             "main.py",

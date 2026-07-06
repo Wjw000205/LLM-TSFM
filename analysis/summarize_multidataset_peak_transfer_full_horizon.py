@@ -77,6 +77,18 @@ def build_runs(datasets: list[str], pred_lens: list[int]) -> list[dict[str, Any]
     return runs
 
 
+def _expected_rule_path(dataset: str, pred_len: int) -> str:
+    return f"llm_rules/generated_rules/{dataset}_p{pred_len}_peak_transfer_rules.json"
+
+
+def _is_horizon_specific_rule_path(path: str | None, dataset: str, pred_len: int) -> bool:
+    if not path:
+        return False
+    normalized = str(path).replace("\\", "/").lstrip("./").lower()
+    expected = _expected_rule_path(dataset, pred_len).lower()
+    return normalized.endswith(expected)
+
+
 def summarize_runs(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [_summarize_one(run) for run in runs]
 
@@ -101,8 +113,11 @@ def _summarize_one(run: dict[str, Any]) -> dict[str, Any]:
     baseline_metrics = _read_json(baseline_dir / "metrics_normalized.json")
     expert_metrics = _read_json(expert_dir / "metrics_normalized.json")
     gated_metrics = _read_json(gated_dir / "metrics_normalized.json")
+    baseline_config = _read_json(baseline_dir / "config.json")
     expert_config = _read_json(expert_dir / "config.json")
     expert_loss = _read_json(expert_dir / "loss_config.json") if (expert_dir / "loss_config.json").exists() else {}
+    _validate_horizon_rule_config(baseline_config, run, baseline_dir)
+    _validate_horizon_rule_config(expert_config, run, expert_dir)
 
     true = np.load(baseline_dir / "true_normalized.npy", mmap_mode="r")
     baseline_pred = np.load(baseline_dir / "pred_normalized.npy", mmap_mode="r")
@@ -265,6 +280,20 @@ def _require_files(paths: list[Path]) -> None:
     missing = [str(path) for path in paths if not path.exists()]
     if missing:
         raise FileNotFoundError("Missing required result files:\n" + "\n".join(missing))
+
+
+def _validate_horizon_rule_config(config: dict[str, Any], run: dict[str, Any], result_dir: Path) -> None:
+    dataset = str(run["dataset"])
+    pred_len = int(run["pred_len"])
+    actual = config.get("llm_rule_path")
+    if _is_horizon_specific_rule_path(actual, dataset, pred_len):
+        return
+    expected = _expected_rule_path(dataset, pred_len)
+    raise ValueError(
+        f"{result_dir} was not produced with a horizon-specific rule file for {dataset} p{pred_len}. "
+        f"Expected llm_rule_path to end with {expected}, got {actual!r}. "
+        "Rerun scripts/run_multihorizon_gpt55_peak_transfer.ps1 after generating per-horizon rules."
+    )
 
 
 def _read_json(path: Path) -> dict[str, Any]:

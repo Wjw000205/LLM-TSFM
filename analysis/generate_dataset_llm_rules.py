@@ -47,6 +47,7 @@ def build_dataset_profile(
     target: str = "OT",
     split: str = "all",
     seq_len: int = 96,
+    pred_len: int = 96,
     max_rows: int | None = None,
 ) -> dict[str, Any]:
     """Build a dataset-specific profile for LLM rule generation.
@@ -85,6 +86,10 @@ def build_dataset_profile(
         "columns": value_columns,
         "target": target,
         "features": features,
+        "forecast_horizon": {
+            "seq_len": int(seq_len),
+            "pred_len": int(pred_len),
+        },
         "time": {
             "date_column": date_col,
             "start": str(dates.iloc[0]),
@@ -449,6 +454,7 @@ def _build_prompt(profile: dict[str, Any]) -> str:
         "Hard constraints:\n"
         "- You are a hypothesis miner, not a verifier or final judge.\n"
         "- Use only train-profile evidence. Do not use validation or test information.\n"
+        "- Treat forecast_horizon.pred_len as part of the experiment configuration; do not assume one horizon's rule config is valid for another horizon.\n"
         "- Do not validate, accept, reject, calibrate, or rank hypotheses inside the LLM output.\n"
         "- Return at most 3 patterns.\n"
         "- Each pattern must be sparse and localized; prefer window_hours <= 4, and use <= 8 only when the evidence window is wider.\n"
@@ -498,6 +504,7 @@ def main() -> None:
     parser.add_argument("--features", default="M", choices=["M", "S", "MS"])
     parser.add_argument("--target", default="OT")
     parser.add_argument("--seq_len", type=int, default=96)
+    parser.add_argument("--pred_len", type=int, default=96)
     parser.add_argument("--profile_split", default="train", choices=["train", "all"])
     parser.add_argument("--model", default=os.environ.get("OPENAI_MODEL", "gpt-5.2"))
     parser.add_argument("--base_url", default=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"))
@@ -516,6 +523,7 @@ def main() -> None:
         target=args.target,
         split=args.profile_split,
         seq_len=args.seq_len,
+        pred_len=args.pred_len,
     )
     output_rule_path = args.output_rule_path or f"./llm_rules/generated_rules/{args.data}_rules.json"
     output_report_path = (
