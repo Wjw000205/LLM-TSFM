@@ -1,0 +1,24 @@
+{
+  "baseline_result_dir": "results\\long_term_forecast_DLinear_ETTm1_ftM_sl336_ll48_pl720_ettm1_gpt55_peak_transfer_p720_baseline_0",
+  "event_result_dir": "results\\long_term_forecast_DLinear_ETTm1_ftM_sl336_ll48_pl720_ettm1_gpt55_peak_transfer_p720_strict_ew1_nopk_lr5e7_0",
+  "gated_result_dir": "results\\long_term_forecast_DLinear_ETTm1_ftM_sl336_ll48_pl720_ettm1_gpt55_peak_transfer_p720_strict_gated_ew1_nopk_lr5e7_0",
+  "channel": "OT",
+  "selected_windows": [
+    1003,
+    6684,
+    1383,
+    7058
+  ],
+  "saved_files": [
+    "artifacts\\figures\\ettm1_gpt55_peak_transfer_strict_regions\\p720\\gpt55_event_window_01_1003_OT.png",
+    "artifacts\\figures\\ettm1_gpt55_peak_transfer_strict_regions\\p720\\gpt55_event_window_01_1003_OT.pdf",
+    "artifacts\\figures\\ettm1_gpt55_peak_transfer_strict_regions\\p720\\gpt55_event_window_02_6684_OT.png",
+    "artifacts\\figures\\ettm1_gpt55_peak_transfer_strict_regions\\p720\\gpt55_event_window_02_6684_OT.pdf",
+    "artifacts\\figures\\ettm1_gpt55_peak_transfer_strict_regions\\p720\\gpt55_event_window_03_1383_OT.png",
+    "artifacts\\figures\\ettm1_gpt55_peak_transfer_strict_regions\\p720\\gpt55_event_window_03_1383_OT.pdf",
+    "artifacts\\figures\\ettm1_gpt55_peak_transfer_strict_regions\\p720\\gpt55_event_window_04_7058_OT.png",
+    "artifacts\\figures\\ettm1_gpt55_peak_transfer_strict_regions\\p720\\gpt55_event_window_04_7058_OT.pdf",
+    "artifacts\\figures\\ettm1_gpt55_peak_transfer_strict_regions\\p720\\gpt55_event_examples_top4_OT.png",
+    "artifacts\\figures\\ettm1_gpt55_peak_transfer_strict_regions\\p720\\gpt55_event_examples_top4_OT.pdf"
+  ]
+}
